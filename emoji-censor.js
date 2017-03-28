@@ -203,12 +203,16 @@ var emojiCensor = (function () {
 
 	///// TEXT-TO-SPEECH
 
-	function speak(text, onFinished) {
+	function speak(text, onFinished, onError) {
 		var utter = new SpeechSynthesisUtterance(text);
+		// It's about here that I should add support for controlling the language and/or
+		// voice via options, but for now just leave it with browser/system defaults.
 		utter.onend = function () {
 			onFinished();
 		};
-		// TODO: Handle errors
+		utter.onerror = function (event) {
+			onError(event.error);
+		};
 		synth.speak(utter);
 	}
 
@@ -229,32 +233,46 @@ var emojiCensor = (function () {
 		}
 	}
 
-	function playBleep(charLength, onFinished) {
+	function playBleep(charLength, onFinished, onError) {
 		ensureContext();
 		var millis = charLength * 200;
-		var osc = audioCtx.createOscillator();
-		osc.frequency.value = 1000;
-		osc.connect(gainNode);
-		osc.start();
-		setTimeout(function () {
-			osc.stop();
-			onFinished();
-		}, millis);
+		try {
+			var osc = audioCtx.createOscillator();
+			osc.frequency.value = 1000;
+			osc.connect(gainNode);
+			osc.start();
+			setTimeout(function () {
+				osc.stop();
+				onFinished();
+			}, millis);
+		} catch (e) {
+			onError(e.message);
+		}
 	}
 
 
 	///// CONTROLLER
 
 	function speakCensored(text) {
-		if (!isAudioSupported() || typeof text !== 'string') return;
+		if (!isAudioSupported() || typeof text !== 'string') {
+			console.warn('[emoji-censor] Cannot speak censored text as some required audio APIs are not found.');
+			return;
+		}
 		var parts = splitText(text);
 		var curIndex = 0;
 
+		// RIP Bill Paxton
+		var gameOverMan = function (verbing, text) {
+			return function (error) {
+				console.error('[emoji-censor] There was an error when ' + verbing + ' the text "' + text + '":', error);
+			};
+		};
+
 		var playPart = function (part) {
 			if (part.isEmoji) {
-				playBleep(part.text.length, next);
+				playBleep(part.text.length, next, gameOverMan('censoring', part.text));
 			} else if (part.text !== '') {
-				speak(part.text, next);
+				speak(part.text, next, gameOverMan('speaking', part.text));
 			} else {
 				next();
 			}
