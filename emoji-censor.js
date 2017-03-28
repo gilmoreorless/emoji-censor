@@ -48,9 +48,15 @@ var emojiCensor = (function () {
 	 *    DOM REDACTION    *
 	 ***********************/
 
+	var classes = {
+		wrapped: 'emoji-wrapped',
+		redacted: 'emoji-redacted',
+		blackout: 'emoji-redacted-blackout',
+	};
+
 	function wrapText(node, blocks, tagName, className) {
 		if (tagName === undefined) tagName = 'span';
-		if (className === undefined) className = 'emoji-wrapped';
+		if (className === undefined) className = classes.wrapped;
 		var origText = node.textContent;
 		var textIndex = 0;
 
@@ -99,23 +105,36 @@ var emojiCensor = (function () {
 	function wrapAllEmoji(selector) {
 		if (!selector) return [];
 
-		var elem = document.querySelector(selector);
-
-		// Set up a DOM node walker
 		var NF = window.NodeFilter;
 		var whatToShow = NF.SHOW_TEXT;
-		var walker = elem.ownerDocument.createTreeWalker(elem, whatToShow, {
-			acceptNode: function (node) {
-				return hasEmoji(node.textContent) ? NF.FILTER_ACCEPT : NF.FILTER_REJECT;
+		var nodeList = [];
+
+		var elems = document.querySelectorAll(selector);
+		Array.prototype.forEach.call(elems, function (elem) {
+			// Set up a DOM node walker for all text nodes in this element
+			var walker = elem.ownerDocument.createTreeWalker(elem, whatToShow, {
+				acceptNode: function (node) {
+					return hasEmoji(node.textContent) ? NF.FILTER_ACCEPT : NF.FILTER_REJECT;
+				}
+			});
+			while ((node = walker.nextNode())) {
+				// Don't re-add this node if it's already queued to be processed
+				if (node.emojiCensorQueued) {
+					continue;
+				}
+				// Skip this node if it's already part of a redaction
+				if (node.parentNode && node.parentNode.classList.contains(classes.redacted)) {
+					continue;
+				}
+				// Add this node to the list and mark it as queued for processing
+				nodeList.push(node);
+				node.emojiCensorQueued = true;
 			}
 		});
-		var nodeList = [];
-		var parentList = [];
-		while ((node = walker.nextNode())) {
-			nodeList.push(node);
-		}
 
-		return nodeList.map(wrapNodeEmoji).reduce(function (m, a) { return m.concat(a); }, []);
+		return nodeList.map(wrapNodeEmoji).reduce(function (m, a) {
+			return m.concat(a);
+		}, []);
 	}
 
 	function redactElements(selector) {
@@ -131,15 +150,19 @@ var emojiCensor = (function () {
 			var width = dims[i].width;
 			var height = dims[i].height;
 			var span = node.ownerDocument.createElement('span');
-			span.className = 'emoji-redacted-blackout';
+			// TODO: Inject blackout styles?
+			span.className = classes.blackout;
 			span.style.width = width + 'px';
 			span.style.height = height + 'px';
-			node.classList.add('emoji-redacted');
+			node.classList.add(classes.redacted);
 			node.appendChild(span);
 		});
+
+		return wrapped;
 	}
 
 	eggsports.redactElements = redactElements;
+	eggsports.redactioAdAbsurdum = redactElements;
 
 
 
@@ -185,11 +208,11 @@ var emojiCensor = (function () {
 		}
 	}
 
-	function playBeep(charLength, onFinished) {
+	function playBleep(charLength, onFinished) {
 		ensureContext();
 		var millis = charLength * 200;
 		var osc = audioCtx.createOscillator();
-		osc.frequency.value = 900;
+		osc.frequency.value = 1000;
 		osc.connect(gainNode);
 		osc.start();
 		setTimeout(function () {
@@ -208,7 +231,7 @@ var emojiCensor = (function () {
 
 		var playPart = function (part) {
 			if (part.isEmoji) {
-				playBeep(part.text.length, next);
+				playBleep(part.text.length, next);
 			} else if (part.text !== '') {
 				speak(part.text, next);
 			} else {
