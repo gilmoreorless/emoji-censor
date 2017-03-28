@@ -50,9 +50,30 @@ var emojiCensor = (function () {
 
 	var classes = {
 		wrapped: 'emoji-wrapped',
-		redacted: 'emoji-redacted',
-		blackout: 'emoji-redacted-blackout',
+		redacted: 'emoji-censor-redacted',
+		blackout: 'emoji-censor-redacted-blackout',
 	};
+
+	// The laziest way to allow users to override default styles while not messing
+	// around with forcing people to include a separate CSS files.
+	var stylesheet;
+	function addStyles() {
+		if (stylesheet) {
+			return;
+		}
+		stylesheet = document.createElement('style');
+		stylesheet.id = 'emoji-censor-default-styles';
+		stylesheet.textContent =
+			'.' + classes.redacted + ' { display: inline-block; position: relative; }\n' +
+			'.' + classes.blackout + ' { display: inline-block; background-color: black; position: absolute; left: 0; top: 0; }\n';
+		// Insert the node before any other styles so users can override them if necessary
+		var referenceNode = document.querySelector('link, style');
+		if (referenceNode) {
+			referenceNode.parentNode.insertBefore(stylesheet, referenceNode);
+		} else {
+			document.head.appendChild(stylesheet);
+		}
+	}
 
 	function wrapText(node, blocks, tagName, className) {
 		if (tagName === undefined) tagName = 'span';
@@ -146,11 +167,11 @@ var emojiCensor = (function () {
 		// Grab all dimensions in one pass to avoid layout thrashing
 		var dims = wrapped.map(function (node) { return node.getBoundingClientRect(); });
 
+		addStyles();
 		wrapped.forEach(function (node, i) {
 			var width = dims[i].width;
 			var height = dims[i].height;
 			var span = node.ownerDocument.createElement('span');
-			// TODO: Inject blackout styles?
 			span.className = classes.blackout;
 			span.style.width = width + 'px';
 			span.style.height = height + 'px';
