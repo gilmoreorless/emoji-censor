@@ -1,54 +1,54 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>Emoji Censor tests</title>
-    <link href="https://fonts.googleapis.com/css?family=Noto+Sans&amp;subset=devanagari" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Noto Sans', sans-serif;
-        }
-    </style>
+	<meta charset="utf-8">
+	<title>Emoji Censor tests</title>
+	<link href="https://fonts.googleapis.com/css?family=Noto+Sans&amp;subset=devanagari" rel="stylesheet">
+	<style>
+		body {
+			font-family: 'Noto Sans', sans-serif;
+		}
+	</style>
 </head>
 <body>
-    <blockquote>
-        <p><em>These shouldn't be replaced at all.</em></p>
-        <p>
-            A Hebrew example, with niqqud:   אֶת דַלְתִּי הֵזִיז הֵנִיעַ, קֶטֶב לִשְׁכַּתִּי יָשׁוֹד<br>
-            Normal writing (no niqqud): את דלתי הזיז הניע, קטב לשכתי ישוד
-        </p>
-        <p>
-            The reductio-ad-absurdum of this is Zalgo text, which works by ͖͟ͅr͞aṋ̫̠̖͈̗d͖̻̹óm̪͙͕̗̝ļ͇̰͓̳̫ý͓̥̟͍ ̕s̫t̫̱͕̗̰̼̘͜a̼̩͖͇̠͈̣͝c̙͍k̖̱̹͍͘i̢n̨̺̝͇͇̟͙ģ̫̮͎̻̟ͅ ̕n̼̺͈͞u̮͙m̺̭̟̗͞e̞͓̰̤͓̫r̵o̖ṷs҉̪͍̭̬̝̤ ̮͉̝̞̗̟͠d̴̟̜̱͕͚i͇̫̼̯̭̜͡ḁ͙̻̼c̲̲̹r̨̠̹̣̰̦i̱t̤̻̤͍͙̘̕i̵̜̭̤̱͎c̵s ͘o̱̲͈̙͖͇̲͢n͘ ̜͈e̬̲̠̩ac͕̺̠͉h̷̪ ̺̣͖̱ḻ̫̬̝̹ḙ̙̺͙̭͓̲t̞̞͇̲͉͍t̷͔̪͉̲̻̠͙e̦̻͈͉͇r͇̭̭̬͖,̖́ ̜͙͓̣̭s̘̘͈o̱̰̤̲ͅ ̛̬̜̙t̼̦͕̱̹͕̥h̳̲͈͝ͅa̦t̻̲ ̻̟̭̦̖t̛̰̩h̠͕̳̝̫͕e͈̤̘͖̞͘y҉̝͙ ̷͉͔̰̠o̞̰v͈͈̳̘͜er̶f̰͈͔ḻ͕̘̫̺̲o̲̭͙͠ͅw̱̳̺ ͜t̸h͇̭͕̳͍e̖̯̟̠ ͍̞̜͔̩̪͜ļ͎̪̲͚i̝̲̹̙̩̹n̨̦̩̖ḙ̼̲̼͢ͅ ̬͝s̼͚̘̞͝p͙̘̻a̙c҉͉̜̤͈̯̖i̥͡n̦̠̱͟g̸̗̻̦̭̮̟ͅ ̳̪̠͖̳̯̕a̫͜n͝d͡ ̣̦̙ͅc̪̗r̴͙̮̦̹̳e͇͚̞͔̹̫͟a̙̺̙ț͔͎̘̹ͅe̥̩͍ a͖̪̜̮͙̹n̢͉̝ ͇͉͓̦̼́a̳͖̪̤̱p̖͔͔̟͇͎͠p̱͍̺ę̲͎͈̰̲̤̫a̯͜r̨̮̫̣̘a̩̯͖n̹̦̰͎̣̞̞c̨̦̱͔͎͍͖e̬͓͘ ̤̰̩͙̤̬͙o̵̼̻̬̻͇̮̪f̴ ̡̙̭͓͖̪̤“̸͙̠̼c̳̗͜o͏̼͙͔̮r̞̫̺̞̥̬ru̺̻̯͉̭̻̯p̰̥͓̣̫̙̤͢t̳͍̳̖ͅi̶͈̝͙̼̙̹o̡͔n̙̺̹̖̩͝ͅ”̨̗͖͚̩.̯͓<br><br>
-        </p>
-        <p>
-            Devanagari: “ह” + “​ि” = “हि” ; Korean: “ᄒ” + “ᅡ” + “ᆫ” = “한”
-        </p>
-        <cite>—<a href="http://reedbeta.com/blog/programmers-intro-to-unicode/">Nathan Reed</a></cite>
-    </blockquote>
-    <hr>
-    <p>
-        What about older things like ©™★♣︎ and ☯☭? Some "classic" emoji like 😀 and 😂😝 and 👏 and 🐱.<br>
-        How about skin tone modifiers? 👍👍🏻👍🏼👍🏽👍🏾👍🏿
-    </p>
-    <ul>
-        <li>Some more ZWJ sequences: 🇦+🇶 = 🇦🇶
-        <li>💑 is not, but 👩‍❤️‍👩 is ZWJ.
-        <li>Most definitely using ZWJ: 👨‍👨‍👧‍👧
-    </ul>
-    <hr>
-    <blockquote>
-        <h3>✂ Copy and 📋 Paste Emoji 👍 No apps required</h3>
-        <p>Emojis are supported on iOS, Android, macOS, Windows, and Linux. Copy and paste emojis to use on Twitter, Facebook, Slack, Instagram, Snapchat, Tumblr and more. Use Emoji Classic for older systems. ⤵️ Jump to:</p>
+	<blockquote>
+		<p><em>These shouldn't be replaced at all.</em></p>
+		<p>
+			A Hebrew example, with niqqud:   אֶת דַלְתִּי הֵזִיז הֵנִיעַ, קֶטֶב לִשְׁכַּתִּי יָשׁוֹד<br>
+			Normal writing (no niqqud): את דלתי הזיז הניע, קטב לשכתי ישוד
+		</p>
+		<p>
+			The reductio-ad-absurdum of this is Zalgo text, which works by ͖͟ͅr͞aṋ̫̠̖͈̗d͖̻̹óm̪͙͕̗̝ļ͇̰͓̳̫ý͓̥̟͍ ̕s̫t̫̱͕̗̰̼̘͜a̼̩͖͇̠͈̣͝c̙͍k̖̱̹͍͘i̢n̨̺̝͇͇̟͙ģ̫̮͎̻̟ͅ ̕n̼̺͈͞u̮͙m̺̭̟̗͞e̞͓̰̤͓̫r̵o̖ṷs҉̪͍̭̬̝̤ ̮͉̝̞̗̟͠d̴̟̜̱͕͚i͇̫̼̯̭̜͡ḁ͙̻̼c̲̲̹r̨̠̹̣̰̦i̱t̤̻̤͍͙̘̕i̵̜̭̤̱͎c̵s ͘o̱̲͈̙͖͇̲͢n͘ ̜͈e̬̲̠̩ac͕̺̠͉h̷̪ ̺̣͖̱ḻ̫̬̝̹ḙ̙̺͙̭͓̲t̞̞͇̲͉͍t̷͔̪͉̲̻̠͙e̦̻͈͉͇r͇̭̭̬͖,̖́ ̜͙͓̣̭s̘̘͈o̱̰̤̲ͅ ̛̬̜̙t̼̦͕̱̹͕̥h̳̲͈͝ͅa̦t̻̲ ̻̟̭̦̖t̛̰̩h̠͕̳̝̫͕e͈̤̘͖̞͘y҉̝͙ ̷͉͔̰̠o̞̰v͈͈̳̘͜er̶f̰͈͔ḻ͕̘̫̺̲o̲̭͙͠ͅw̱̳̺ ͜t̸h͇̭͕̳͍e̖̯̟̠ ͍̞̜͔̩̪͜ļ͎̪̲͚i̝̲̹̙̩̹n̨̦̩̖ḙ̼̲̼͢ͅ ̬͝s̼͚̘̞͝p͙̘̻a̙c҉͉̜̤͈̯̖i̥͡n̦̠̱͟g̸̗̻̦̭̮̟ͅ ̳̪̠͖̳̯̕a̫͜n͝d͡ ̣̦̙ͅc̪̗r̴͙̮̦̹̳e͇͚̞͔̹̫͟a̙̺̙ț͔͎̘̹ͅe̥̩͍ a͖̪̜̮͙̹n̢͉̝ ͇͉͓̦̼́a̳͖̪̤̱p̖͔͔̟͇͎͠p̱͍̺ę̲͎͈̰̲̤̫a̯͜r̨̮̫̣̘a̩̯͖n̹̦̰͎̣̞̞c̨̦̱͔͎͍͖e̬͓͘ ̤̰̩͙̤̬͙o̵̼̻̬̻͇̮̪f̴ ̡̙̭͓͖̪̤“̸͙̠̼c̳̗͜o͏̼͙͔̮r̞̫̺̞̥̬ru̺̻̯͉̭̻̯p̰̥͓̣̫̙̤͢t̳͍̳̖ͅi̶͈̝͙̼̙̹o̡͔n̙̺̹̖̩͝ͅ”̨̗͖͚̩.̯͓<br><br>
+		</p>
+		<p>
+			Devanagari: “ह” + “​ि” = “हि” ; Korean: “ᄒ” + “ᅡ” + “ᆫ” = “한”
+		</p>
+		<cite>—<a href="http://reedbeta.com/blog/programmers-intro-to-unicode/">Nathan Reed</a></cite>
+	</blockquote>
+	<hr>
+	<p>
+		What about older things like ©™★♣︎ and ☯☭? Some "classic" emoji like 😀 and 😂😝 and 👏 and 🐱.<br>
+		How about skin tone modifiers? 👍👍🏻👍🏼👍🏽👍🏾👍🏿
+	</p>
+	<ul>
+		<li>Some more ZWJ sequences: 🇦+🇶 = 🇦🇶
+		<li>💑 is not, but 👩‍❤️‍👩 is ZWJ.
+		<li>Most definitely using ZWJ: 👨‍👨‍👧‍👧
+	</ul>
+	<hr>
+	<blockquote>
+		<h3>✂ Copy and 📋 Paste Emoji 👍 No apps required</h3>
+		<p>Emojis are supported on iOS, Android, macOS, Windows, and Linux. Copy and paste emojis to use on Twitter, Facebook, Slack, Instagram, Snapchat, Tumblr and more. Use Emoji Classic for older systems. ⤵️ Jump to:</p>
 
-        <p>😃💁 People • 🐻🌻 Animals • 🍔🍹 Food • 🎷⚽️ Activities • 🚘🌇 Travel • 💡🎉 Objects • 💖🔣 Symbols • 🎌🏳️‍🌈 Flags</p>
-        <cite>—<a href="http://getemoji.com/">getemoji.com</a></cite>
-    </blockquote>
+		<p>😃💁 People • 🐻🌻 Animals • 🍔🍹 Food • 🎷⚽️ Activities • 🚘🌇 Travel • 💡🎉 Objects • 💖🔣 Symbols • 🎌🏳️‍🌈 Flags</p>
+		<cite>—<a href="http://getemoji.com/">getemoji.com</a></cite>
+	</blockquote>
 
-    <script src="emoji-censor.js"></script>
-    <script>
-        setTimeout(function () {
-            emojiCensor.redactElements('p, body > *');
-        }, 500);
-    </script>
+	<script src="emoji-censor.js"></script>
+	<script>
+		setTimeout(function () {
+			emojiCensor.redactElements('p, body > *');
+		}, 500);
+	</script>
 </body>
 </html>

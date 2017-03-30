@@ -65,7 +65,7 @@ var emojiCensor = (function () {
 		stylesheet.id = 'emoji-censor-default-styles';
 		stylesheet.textContent =
 			'.' + classes.redacted + ' { display: inline-block; position: relative; }\n' +
-			'.' + classes.blackout + ' { display: inline-block; background-color: black; position: absolute; left: 0; top: 0; }\n';
+			'.' + classes.blackout + ' { display: inline-block; background-color: black; position: absolute; left: -1px; top: 0; }\n';
 		// Insert the node before any other styles so users can override them if necessary
 		var referenceNode = document.querySelector('link, style');
 		if (referenceNode) {
@@ -130,7 +130,7 @@ var emojiCensor = (function () {
 		var whatToShow = NF.SHOW_TEXT;
 		var nodeList = [];
 
-		var elems = document.querySelectorAll(selector);
+		var elems = selector instanceof HTMLElement ? [selector] : document.querySelectorAll(selector);
 		Array.prototype.forEach.call(elems, function (elem) {
 			// Set up a DOM node walker for all text nodes in this element
 			var walker = elem.ownerDocument.createTreeWalker(elem, whatToShow, {
@@ -169,7 +169,7 @@ var emojiCensor = (function () {
 
 		addStyles();
 		wrapped.forEach(function (node, i) {
-			var width = dims[i].width;
+			var width = dims[i].width + 2;
 			var height = dims[i].height;
 			var span = node.ownerDocument.createElement('span');
 			span.className = classes.blackout;
