@@ -214,6 +214,11 @@ var emojiCensor = (function () {
 			onError(event.error);
 		};
 		synth.speak(utter);
+		return {
+			stop: function () {
+				synth.cancel();
+			}
+		}
 	}
 
 
@@ -244,6 +249,11 @@ var emojiCensor = (function () {
 				osc.stop();
 				onFinished();
 			}, millis);
+			return {
+				stop: function () {
+					osc.stop();
+				}
+			}
 		} catch (e) {
 			onError(e.message);
 		}
@@ -252,14 +262,31 @@ var emojiCensor = (function () {
 
 	///// CONTROLLER
 
-	function speakCensored(text) {
+	function speakCensored(text, onFinished) {
+		var finish = function () {
+			if (onFinished) {
+				onFinished();
+			}
+		}
+
 		if (!isAudioSupported() || typeof text !== 'string') {
 			console.warn('[emoji-censor] Cannot speak censored text as some required audio APIs are not found.');
+			finish();
 			return;
 		}
 		ensureContext();
 		var parts = splitText(text);
 		var curIndex = 0;
+		var curPlayer;
+		var shouldContinue = true;
+
+		var stopSpeaking = function () {
+			shouldContinue = false;
+			if (curPlayer && curPlayer.stop) {
+				curPlayer.stop();
+			}
+			finish();
+		};
 
 		// RIP Bill Paxton
 		var gameOverMan = function (verbing, text) {
@@ -270,21 +297,29 @@ var emojiCensor = (function () {
 
 		var playPart = function (part) {
 			if (part.isEmoji) {
-				playBleep(part.text.length, next, gameOverMan('censoring', part.text));
+				curPlayer = playBleep(part.text.length, next, gameOverMan('censoring', part.text));
 			} else if (part.text !== '') {
-				speak(part.text, next, gameOverMan('speaking', part.text));
+				curPlayer = speak(part.text, next, gameOverMan('speaking', part.text));
 			} else {
 				next();
 			}
 		};
 
 		var next = function () {
-			if (curIndex < parts.length) {
-				playPart(parts[curIndex++]);
+			if (shouldContinue) {
+				if (curIndex < parts.length) {
+					playPart(parts[curIndex++]);
+				} else {
+					finish();
+				}
 			}
 		};
 
 		next();
+
+		return {
+			stop: stopSpeaking
+		}
 	}
 
 	eggsports.isAudioSupported = isAudioSupported;

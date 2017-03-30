@@ -37,10 +37,16 @@
 		emojiCensor.redactElements(dom.output);
 	}
 
+	var currentPlayer;
 	function playIt() {
+		if (currentPlayer) {
+			currentPlayer.stop();
+		}
 		var text = dom.input.value;
 		if (text.length) {
-			emojiCensor.speakCensored(text);
+			currentPlayer = emojiCensor.speakCensored(text, function () {
+				currentPlayer = null;
+			});
 		}
 	}
 
