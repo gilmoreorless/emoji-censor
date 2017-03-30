@@ -58,8 +58,11 @@
 		document.body.classList.add('audio-test-failed');
 	}
 
-	setOutput();
-	emojiCensor.redactElements('h1, footer');
+	// Initial censoring of the page, but run after page load to allow text/emoji to finish rendering
+	window.addEventListener('load', function () {
+		setOutput();
+		emojiCensor.redactElements('h1, footer');
+	});
 
 	// Yup, I still like to know if anyone actually visits my sites
 	if (~location.hostname.indexOf('github.io')) {

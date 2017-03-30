@@ -63,9 +63,17 @@ a {
 	border: 1px solid #333;
 	border-radius: 3px;
 	box-shadow: 1px 2px 5px 1px rgba(0, 0, 0, 0.2);
+	color: inherit;
 	font-size: inherit;
 	font-family: inherit;
 	padding: 0.5em 1.5em;
+}
+.play-audio:hover {
+	background-color: hsl(120, 95%, 92%);
+}
+.play-audio:active {
+	box-shadow: 1px 1px 4px 1px rgba(0, 0, 0, 0.2);
+	transform: translateY(1px);
 }
 small {
 	font-style: italic;
