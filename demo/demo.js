@@ -57,7 +57,7 @@
 
 	// Yup, I still like to know if anyone actually visits my sites
 	if (~location.hostname.indexOf('github.io')) {
-		var ga = function () {
+		var ga = window.ga = function () {
 			ga.q.push(arguments);
 		};
 		ga.q = [
