@@ -1,0 +1,99 @@
+body {
+	font-family: 'Noto Sans', sans-serif;
+	margin: 0;
+	padding: 0;
+}
+* {
+	box-sizing: border-box;
+}
+h1 {
+	text-align: center;
+}
+h2 {
+	margin-top: 0;
+}
+a {
+	color: hsl(190, 60%, 30%);
+}
+.subtitle {
+	text-align: center;
+	padding: 0 1em;
+}
+
+.split {
+	display: flex;
+	flex-direction: column;
+	margin-top: 2em;
+}
+.split > * {
+	padding: 1.25em;
+}
+.input-container {
+	background-color: hsl(210, 80%, 95%);
+}
+.input-box {
+	background-color: white;
+	border: 1px solid #333;
+	border-radius: 3px;
+	display: block;
+	font-size: inherit;
+	font-family: inherit;
+	height: 10em;
+	padding: 0.5em;
+	width: 100%;
+}
+
+.output-container {
+	background-color: hsl(37, 80%, 95%);
+}
+.output-ummm---output {
+	background-color: rgba(255, 255, 255, 0.5);
+	border-radius: 3px;
+	box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.5);
+	display: block;
+	min-height: 1em;
+	padding: 0.5em;
+}
+
+.output-audio {
+	margin-top: 3em;
+}
+.play-audio {
+	background-color: hsl(120, 100%, 95%);
+	border: 1px solid #333;
+	border-radius: 3px;
+	box-shadow: 1px 2px 5px 1px rgba(0, 0, 0, 0.2);
+	font-size: inherit;
+	font-family: inherit;
+	padding: 0.5em 1.5em;
+}
+small {
+	font-style: italic;
+}
+.audio-unsupported {
+	display: none;
+}
+.audio-test-failed .audio-supported {
+	display: none;
+}
+.audio-test-failed .audio-unsupported {
+	display: block;
+}
+
+.does-anyone-actually-read-footers {
+	background-color: hsl(105, 30%, 95%);
+	padding: 1.25em;
+	padding-top: 2.5em;
+	text-align: center;
+}
+
+@media (min-width: 40rem) {
+	.split {
+		flex-direction: row;
+		width: 100%;
+	}
+	.split > * {
+		flex: 1 1 50%;
+		padding: 1.5em;
+	}
+}

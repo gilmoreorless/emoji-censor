@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Emoji Censor</title>
+	<link href="https://fonts.googleapis.com/css?family=Noto+Sans" rel="stylesheet">
+	<link href="demo/demo.css" rel="stylesheet">
+</head>
+<body>
+	<h1>Emoji 🚫 Censor</h1>
+	<p class="subtitle">A script to censor out any emoji characters in a piece of text, either visually or audibly. Just because.</p>
+	<p class="subtitle"><a href="https://github.com/gilmoreorless/emoji-censor">See more details with the source code on GitHub.</a></p>
+
+	<div class="split">
+		<section class="input-container">
+			<h2>Enter some emoji-laden text here</h2>
+			<textarea id="text-input" class="input-box">
+What a great 🎉 party! 😃🎂
+
+Happy family: 👨‍👩‍👧‍👧
+</textarea>
+		</section>
+		<section class="output-container">
+			<h2>Text with redacted emoji</h2>
+			<output id="text-output" class="output-ummm---output" for="text-input"></output>
+			<div class="output-audio">
+				<h3>Once more, with <s>feeling</s> sound</h3>
+				<div class="audio-supported">
+					<p><button id="radio-gag-gag" class="play-audio"> ▶️ &nbsp; Play it censored</button></p>
+					<p><small>(You might want to wear headphones if there are other people around.)</small></p>
+				</div>
+				<p class="audio-unsupported">️️🚫 Sorry, audio censoring isn't supported in your browser. 🙁</p>
+			</div>
+		</section>
+	</div>
+
+	<footer class="does-anyone-actually-read-footers">
+		<p>Made with 💤<!-- Ha, made you look! --> by <a href="https://twitter.com/iamnotyourbroom">@iamnotyourbroom</a>.</p>
+		<p>Find some of my other projects at <a href="https://gilmoreorless.github.io/">gilmoreorless.github.io</a>.</p>
+	</footer>
+
+	<script src="emoji-censor.js"></script>
+	<script src="demo/demo.js"></script>
+</body>
+</html>
