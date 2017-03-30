@@ -234,7 +234,6 @@ var emojiCensor = (function () {
 	}
 
 	function playBleep(charLength, onFinished, onError) {
-		ensureContext();
 		var millis = charLength * 200;
 		try {
 			var osc = audioCtx.createOscillator();
@@ -258,6 +257,7 @@ var emojiCensor = (function () {
 			console.warn('[emoji-censor] Cannot speak censored text as some required audio APIs are not found.');
 			return;
 		}
+		ensureContext();
 		var parts = splitText(text);
 		var curIndex = 0;
 
