@@ -12,6 +12,8 @@ Really, this all started with a tweet from [Ben Buchanan](http://weblog.200ok.co
 >
 > — Ben Buchanan (@200okpublic) [March 14, 2017](https://twitter.com/200okpublic/status/841555205833469953)
 
+The best way to describe it properly is to just link to the demo, so go play with it: [gilmoreorless.github.io/emoji-censor](https://gilmoreorless.github.io/emoji-censor/)
+
 
 ## Usage
 
