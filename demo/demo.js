@@ -1,9 +1,18 @@
 (function() {
 	var dom = {
 		input: document.getElementById('text-input'),
+		optTranslate: document.getElementById('use-emoji-translate'),
 		output: document.getElementById('text-output'),
 		play: document.getElementById('radio-gag-gag'),
 	};
+
+	var useTranslate = false;
+	var currentText = '';
+
+	function toggleUseTranslate() {
+		useTranslate = dom.optTranslate.checked;
+		setOutput();
+	}
 
 	function debounce(fn, waitTime) {
 		var timeout;
@@ -22,16 +31,31 @@
 		}
 	}
 
+	function translateText(text) {
+		var words = text.split(' ').map(function (word) {
+			if (!word.length) return word;
+			var cleanWord = word.replace(/\W/g, '');
+			var translated = emojiTranslate.getMeAnEmoji(cleanWord);
+			if (!translated.length) return word;
+			return word.replace(cleanWord, translated[0]);
+		});
+		return words.join(' ');
+	}
+
 	function setOutput() {
 		var fragment = document.createDocumentFragment();
 		var lines = dom.input.value.split(/(\n)/g);
-		lines.forEach(function (line) {
+		currentText = lines.map(function (line) {
 			if (line === '\n') {
 				fragment.appendChild(document.createElement('br'));
 			} else if (line.length) {
+				if (useTranslate) {
+					line = translateText(line);
+				}
 				fragment.appendChild(document.createTextNode(line));
 			}
-		});
+			return line;
+		}).join('');
 		dom.output.innerHTML = '';
 		dom.output.appendChild(fragment);
 		emojiCensor.redactElements(dom.output);
@@ -42,21 +66,26 @@
 		if (currentPlayer) {
 			currentPlayer.stop();
 		}
-		var text = dom.input.value;
-		if (text.length) {
-			currentPlayer = emojiCensor.speakCensored(text, function () {
+		if (currentText.length) {
+			currentPlayer = emojiCensor.speakCensored(currentText, function () {
 				currentPlayer = null;
 			});
 		}
 	}
 
 	dom.input.addEventListener('input', debounce(setOutput, 500));
+	dom.optTranslate.addEventListener('change', toggleUseTranslate);
 
 	if (emojiCensor.isAudioSupported()) {
 		dom.play.addEventListener('click', playIt);
 	} else {
 		document.body.classList.add('audio-test-failed');
 	}
+
+	// Enable the emoji-translate option once its data has been loaded
+	document.addEventListener('emoji-ready', function () {
+		dom.optTranslate.disabled = false;
+	});
 
 	// Initial censoring of the page, but run after page load to allow text/emoji to finish rendering
 	window.addEventListener('load', function () {

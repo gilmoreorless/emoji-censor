@@ -16,10 +16,14 @@
 		<section class="input-container">
 			<h2>Enter some emoji-laden text here</h2>
 			<textarea id="text-input" class="input-box">
-What a great 🎉 party! 😃🎂
+This is such a great 🎉 party! 😃🎂
 
-Happy family: 👨‍👩‍👧‍👧
+A wonderful family: 👨‍👩‍👧‍👧
 </textarea>
+			<div class="input-options">
+				<input type="checkbox" id="use-emoji-translate" disabled>
+				<label for="use-emoji-translate">Use <a href="https://meowni.ca/emoji-translate/" title="emoji-translate by Monica Dinculescu">emoji-translate</a> before censoring.</label>
+			</div>
 		</section>
 		<section class="output-container">
 			<h2>Text with redacted emoji</h2>
@@ -41,6 +45,7 @@ Happy family: 👨‍👩‍👧‍👧
 	</footer>
 
 	<script src="emoji-censor.js"></script>
+	<script src="demo/emoji-translate.js"></script>
 	<script src="demo/demo.js"></script>
 </body>
 </html>
