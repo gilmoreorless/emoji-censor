@@ -57,7 +57,7 @@ input:disabled + label {
 	border-radius: 3px;
 	box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.5);
 	display: block;
-	min-height: 1em;
+	min-height: 2em;
 	padding: 0.5em;
 }
 
