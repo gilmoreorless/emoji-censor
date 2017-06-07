@@ -49,20 +49,21 @@ var emojiCensor = (function () {
 	 ***********************/
 
 	var classes = {
-		wrapped: 'emoji-wrapped',
+		wrapped: 'emoji-censor-wrapped',
 		redacted: 'emoji-censor-redacted',
 		blackout: 'emoji-censor-redacted-blackout',
 	};
 
 	// The laziest way to allow users to override default styles while not messing
-	// around with forcing people to include a separate CSS files.
+	// around with forcing people to include a separate CSS file.
 	var stylesheet;
 	function addStyles() {
-		if (stylesheet) {
+		var stylesheetId = 'emoji-censor-default-styles';
+		if (stylesheet || (stylesheet = document.getElementById(stylesheetId))) {
 			return;
 		}
 		stylesheet = document.createElement('style');
-		stylesheet.id = 'emoji-censor-default-styles';
+		stylesheet.id = stylesheetId;
 		stylesheet.textContent =
 			'.' + classes.redacted + ' { display: inline-block; position: relative; }\n' +
 			'.' + classes.blackout + ' { display: inline-block; background-color: black; position: absolute; left: -1px; top: 0; }\n';
@@ -183,8 +184,13 @@ var emojiCensor = (function () {
 		return wrapped;
 	}
 
+	function redactedCount() {
+		return document.querySelectorAll('.' + classes.redacted).length;
+	}
+
 	eggsports.redactElements = redactElements;
 	eggsports.redactioAdAbsurdum = redactElements;
+	eggsports.redactedCount = redactedCount;
 
 
 

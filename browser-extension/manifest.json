@@ -1,0 +1,23 @@
+{
+	"name": "Emoji Censor",
+	"version": "1.0.0",
+	"description": "Redacts all emoji characters on a page, replacing them with black boxes",
+	"manifest_version": 2,
+	"icons": {
+		"16": "icons/icon-16.png",
+		"32": "icons/icon-32.png",
+		"48": "icons/icon-48.png",
+		"128": "icons/icon-128.png",
+		"256": "icons/icon-256.png"
+	},
+	"background": {
+		"scripts": ["background.js"],
+		"persistent": false
+	},
+	"browser_action": {
+		"default_title": "Censor all emoji"
+	},
+	"permissions": [
+		"*://*/*"
+	]
+}
