@@ -2,14 +2,27 @@
  * Basic process
  *
  * - Click browser action
- *     - If content script isn't in the page, inject it
- *     - Run script to redact any unredacted emoji
- *     - Get count of redacted elements
- *     - Set icon badge to count of redactions for that tab
- *         - Set error icon and different colour if it didn't work
+ *   - If censoring is disabled
+ *     - Enable censoring
+ *     - Tell current tab to start censoring
+ *   - If censoring is enabled
+ *     - Disable censoring
+ *     - Tell current tab to remove redactions & stop censoring
+ *   - On tab selected, ensure that tab's content script is in the right mode
+ * 
+ * COMMS EVENTS
+ * 
+ * › Background -> content
+ *   • setActive
+ *   • setInactive
+ *   • isPageActive -> returns boolean
+ * 
+ * › Content -> background
+ *   • isGlobalActive -> returns boolean
+ *   • totalRedacted {count: int}
  */
 
-var codeData;
+var isCensoringActive = false;
 
 var colors = {
 	good: 'hsl(126, 93%, 33%)',
@@ -17,76 +30,71 @@ var colors = {
 	bad: 'hsl(16, 83%, 43%)'
 };
 
-function executeScriptPromise(tab, opts) {
-	return new Promise(function (resolve, reject) {
-		chrome.tabs.executeScript(tab.id, opts, function (results) {
-			if (chrome.runtime.lastError) {
-				reject(chrome.runtime.lastError);
-			} else {
-				resolve(results);
-			}
-		});
-	});
+var actionTitle = {
+	active: 'Stop censoring emoji',
+	inactive: 'Censor all emoji'
+};
+
+function getCountText(count) {
+	if (count <= 999) {
+		return count.toString();
+	}
+	return Math.floor(count / 1000) + 'k';
 }
 
-function injectContentScriptIfNeeded(tab) {
-	return executeScriptPromise(tab, {
-		code: 'document.documentElement.dataset.emojiCensorInstalled;'
-	}).then(function (results) {
-		if (results && results[0]) {
-			return tab;
-		}
-		return executeScriptPromise(tab, {
-			file: 'emoji-censor.js'
-		}).then(function () {
-			return executeScriptPromise(tab, {
-				code: 'document.documentElement.dataset.emojiCensorInstalled = true;'
-			});
-		}).then(function () {
-			return tab;
-		});
-	});
-}
-
-function setBadgeCount(tab, count) {
-	var badgeOptions = {tabId: tab.id, text: ''};
+function setBadgeCount(tabId, count) {
+	var badgeOptions = { tabId: tabId, text: '' };
 	if (count != null && count !== '') {
-		badgeOptions.text = '' + count;
+		badgeOptions.text = getCountText(count);
 	}
 	chrome.browserAction.setBadgeText(badgeOptions);
 }
 
-function setBadgeColor(tab, color) {
+function setBadgeColor(tabId, color) {
 	chrome.browserAction.setBadgeBackgroundColor({
-		tabId: tab.id,
+		tabId: tabId,
 		color: color
 	});
 }
 
-function setTotalCount(tab, count) {
-	setBadgeColor(tab, colors.good);
-	setBadgeCount(tab, count);
+function setTotalCount(tabId, count) {
+	setBadgeColor(tabId, colors.good);
+	setBadgeCount(tabId, isCensoringActive ? count : '');
 }
 
-function replaceAndGetCount(tab) {
-	return executeScriptPromise(tab, {
-		code: 'emojiCensor.redactElements(document.body); emojiCensor.redactedCount();'
-	}).then(function (results) {
-		return (results && +results[0] || 0);
+function ensureTabStatus(tabId) {
+	chrome.tabs.sendMessage(tabId, {
+		msg: isCensoringActive ? 'setActive' : 'setInactive'
 	});
 }
 
-function runConverter(tab) {
-	injectContentScriptIfNeeded(tab)
-		.then(replaceAndGetCount)
-		.then(function (count) {
-			setTotalCount(tab, count);
-		})
-	.catch(function (err) {
-		console.error('Emoji Censor error:', err, tab);
-		setBadgeColor(tab, colors.bad);
-		setBadgeCount(tab, 'x');
+function toggleStatus() {
+	isCensoringActive = !isCensoringActive;
+	chrome.tabs.query({ active: true }, function (tabs) {
+		tabs.forEach(function (tab) {
+			ensureTabStatus(tab.id);
+		});
+	});
+	chrome.browserAction.setTitle({
+		title: actionTitle[isCensoringActive ? 'active' : 'inactive']
 	});
 }
 
-chrome.browserAction.onClicked.addListener(runConverter);
+function contentScriptMessageHandler(request, sender, sendResponse) {
+	if (sender.tab && request.msg) {
+		switch (request.msg) {
+			case 'isGlobalActive':
+				sendResponse({ isActive: isCensoringActive });
+				break;
+			case 'totalRedacted':
+				setTotalCount(sender.tab.id, request.count);
+				break;
+		}
+	}
+}
+
+chrome.browserAction.onClicked.addListener(toggleStatus);
+chrome.runtime.onMessage.addListener(contentScriptMessageHandler);
+chrome.tabs.onActivated.addListener(function (activeInfo) {
+	ensureTabStatus(activeInfo.tabId);
+});

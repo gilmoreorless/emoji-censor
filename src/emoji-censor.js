@@ -66,7 +66,8 @@ var emojiCensor = (function () {
 		stylesheet.id = stylesheetId;
 		stylesheet.textContent =
 			'.' + classes.redacted + ' { display: inline-block; position: relative; }\n' +
-			'.' + classes.blackout + ' { display: inline-block; background-color: black; position: absolute; left: -1px; top: 0; }\n';
+			'.' + classes.blackout + ' { display: none; background-color: black; position: absolute; left: -1px; top: 0; }\n' +
+			'.' + classes.redacted + ' .' + classes.blackout + ' { display: inline-block; }';
 		// Insert the node before any other styles so users can override them if necessary
 		var referenceNode = document.querySelector('link, style');
 		if (referenceNode) {
