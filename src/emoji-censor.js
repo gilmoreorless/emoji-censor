@@ -132,7 +132,14 @@ var emojiCensor = (function () {
 		var whatToShow = NF.SHOW_TEXT;
 		var nodeList = [];
 
-		var elems = selector instanceof HTMLElement ? [selector] : document.querySelectorAll(selector);
+		var elems;
+		if (selector instanceof HTMLElement) {
+			elems = [selector];
+		} else if (Array.isArray(selector) || selector instanceof NodeList) {
+			elems = selector;
+		} else {
+			elems = document.querySelectorAll(selector)
+		};
 		Array.prototype.forEach.call(elems, function (elem) {
 			// Set up a DOM node walker for all text nodes in this element
 			var walker = elem.ownerDocument.createTreeWalker(elem, whatToShow, {

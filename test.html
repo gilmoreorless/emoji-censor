@@ -8,6 +8,17 @@
 		body {
 			font-family: 'Noto Sans', sans-serif;
 		}
+		.actions button {
+			background: #eee;
+			border: 1px solid;
+			border-radius: 2px;
+			font-size: 1.1em;
+			margin: 0 0.5em;
+			padding: 0.2em 0.5em;
+		}
+		#dynamic-content {
+			min-height: 10em;
+		}
 	</style>
 </head>
 <body>
@@ -43,12 +54,62 @@
 		<p>😃💁 People • 🐻🌻 Animals • 🍔🍹 Food • 🎷⚽️ Activities • 🚘🌇 Travel • 💡🎉 Objects • 💖🔣 Symbols • 🎌🏳️‍🌈 Flags</p>
 		<cite>—<a href="http://getemoji.com/">getemoji.com</a></cite>
 	</blockquote>
+	<hr>
+	<div class="actions">
+		<button id="add-content">Add more content</button>
+		<button id="remove-content">Remove some content</button>
+	</div>
+	<div id="dynamic-content"></div>
 
 	<script src="src/emoji-censor.js"></script>
 	<script>
-		setTimeout(function () {
-			emojiCensor.redactElements('p, body > *');
-		}, 500);
+		// setTimeout(function () {
+		// 	emojiCensor.redactElements('p, body > *');
+		// }, 500);
+
+		function rand(min, max) {
+			if (arguments.length < 2) {
+				max = min;
+				min = 0;
+			}
+			return Math.round(Math.random() * (max - min)) + min;
+		}
+
+		function randomEmoji() {
+			return String.fromCodePoint(rand(128000, 128253)); // 1F400–1F4FD, guaranteed to produce a valid character
+		}
+
+		function randomChar() {
+			return String.fromCharCode(rand(97, 122));
+		}
+
+		function randomWord() {
+			var charCount = rand(3, 16);
+			return Array(charCount).fill('').map(randomChar).join('');
+		}
+
+		function randomSentence() {
+			var wordCount = rand(10, 30);
+			return Array(wordCount).fill('').map(function () {
+				return rand(1) === 0 ? randomEmoji() : randomWord();
+			}).join(' ');
+		}
+
+		var container = document.getElementById('dynamic-content');
+		document.getElementById('add-content').addEventListener('click', function () {
+			var p = document.createElement('p');
+			p.className = 'sentence';
+			p.textContent = randomSentence();
+			container.appendChild(p);
+		});
+
+		document.getElementById('remove-content').addEventListener('click', function () {
+			var elems = container.querySelectorAll('.sentence');
+			if (elems.length) {
+				var remove = elems[rand(elems.length - 1)];
+				container.removeChild(remove);
+			}
+		});
 	</script>
 </body>
 </html>

@@ -4,12 +4,31 @@
  * - When page is loaded, ask for censoring status
  * - If censoring is enabled:
  *   - Redact page & send total count to background script
- *   - [TODO] Set up mutation observer
+ *   - Set up mutation observer
  *     - On new content, redact it and update count
  *     - On removed content, look for removed redactions and update count
  */
 
 var isCensoringActive = false;
+
+var observer = new MutationObserver(function (mutations) {
+	console.log('observer', mutations);
+	mutations.forEach(function (mutation) {
+		if (mutation.type === 'childList') {
+			emojiCensor.redactElements(mutation.addedNodes);
+		} else if (mutation.type === 'characterData') {
+			emojiCensor.redactElements(mutation.target);
+		}
+	});
+	sendTotalCount();
+});
+
+var observerConfig = {
+	characterData: true,
+	childList: true,
+	subtree: true,
+};
+
 function setIsActive(isNowActive) {
 	console.log('setIsActive', isNowActive);
 	isNowActive = !!isNowActive;
@@ -23,11 +42,13 @@ function setIsActive(isNowActive) {
 		});
 		emojiCensor.redactElements(document.body);
 		sendTotalCount();
+		observer.observe(document.body, observerConfig);
 	} else {
 		document.querySelectorAll('.emoji-censor-redacted').forEach(el => {
 			el.classList.remove('emoji-censor-redacted');
 		});
 		sendTotalCount(0);
+		observer.disconnect();
 	}
 }
 
