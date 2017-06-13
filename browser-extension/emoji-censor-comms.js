@@ -9,25 +9,39 @@
  *     - On removed content, look for removed redactions and update count
  */
 
+var specialCases = [
+	['twitter.com', '.Emoji'],
+	['mobile.twitter.com', 'img[src*="twimg.com/emoji/"]'],
+];
+
 var isCensoringActive = false;
 
-var observer = new MutationObserver(function (mutations) {
-	console.log('observer', mutations);
-	mutations.forEach(function (mutation) {
-		if (mutation.type === 'childList') {
-			emojiCensor.redactElements(mutation.addedNodes);
-		} else if (mutation.type === 'characterData') {
-			emojiCensor.redactElements(mutation.target);
+function redact(elems) {
+	var options = {};
+	specialCases.forEach(function (rule) {
+		if (location.hostname === rule[0]) {
+			options.customDisplayElements = rule[1];
 		}
 	});
-	sendTotalCount();
-});
+	emojiCensor.redactElements(elems, options);
+}
 
 var observerConfig = {
 	characterData: true,
 	childList: true,
 	subtree: true,
 };
+var observer = new MutationObserver(function (mutations) {
+	console.log('observer', mutations);
+	mutations.forEach(function (mutation) {
+		if (mutation.type === 'childList') {
+			redact(mutation.addedNodes);
+		} else if (mutation.type === 'characterData') {
+			redact(mutation.target);
+		}
+	});
+	sendTotalCount();
+});
 
 function setIsActive(isNowActive) {
 	console.log('setIsActive', isNowActive);
@@ -40,7 +54,7 @@ function setIsActive(isNowActive) {
 		document.querySelectorAll('.emoji-censor-wrapped').forEach(el => {
 			el.classList.add('emoji-censor-redacted');
 		});
-		emojiCensor.redactElements(document.body);
+		redact(document.body);
 		sendTotalCount();
 		observer.observe(document.body, observerConfig);
 	} else {

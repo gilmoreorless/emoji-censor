@@ -52,6 +52,22 @@ var emojiCensor = (function () {
 		return !excludeRedaction.hasOwnProperty(parent.nodeName);
 	}
 
+	function hasBeenRedacted(node) {
+		return node.parentNode && node.parentNode.classList.contains(classes.redacted);
+	}
+
+	function getElementArray(elemsOrSelector) {
+		var elems;
+		if (elemsOrSelector instanceof HTMLElement) {
+			elems = [elemsOrSelector];
+		} else if (Array.isArray(elemsOrSelector) || elemsOrSelector instanceof NodeList) {
+			elems = elemsOrSelector;
+		} else {
+			elems = document.querySelectorAll(elemsOrSelector);
+		};
+		return Array.prototype.slice.call(elems);
+	}
+
 	eggsports.hasEmoji = hasEmoji;
 	eggsports.splitText = splitText;
 
@@ -90,9 +106,10 @@ var emojiCensor = (function () {
 		}
 	}
 
-	function wrapText(node, blocks, tagName, className) {
-		if (tagName === undefined) tagName = 'span';
-		if (className === undefined) className = classes.wrapped;
+	var wrapTagName = 'span';
+	var wrapClassName = classes.wrapped;
+
+	function wrapText(node, blocks) {
 		var origText = node.textContent;
 		var textIndex = 0;
 
@@ -104,9 +121,9 @@ var emojiCensor = (function () {
 
 		var wrappers = [];
 		blocks.forEach(function (block) {
-			var wrapper = doc.createElement(tagName);
+			var wrapper = doc.createElement(wrapTagName);
 			wrapper.textContent = block.text;
-			wrapper.className = className;
+			wrapper.className = wrapClassName;
 			frag.appendChild(subTextNode(textIndex, block.index));
 			frag.appendChild(wrapper);
 			textIndex = block.index + block.text.length;
@@ -118,6 +135,15 @@ var emojiCensor = (function () {
 
 		node.parentNode.replaceChild(frag, node);
 		return wrappers;
+	}
+
+	function wrapWholeNode(node) {
+		var wrapper = node.ownerDocument.createElement(wrapTagName);
+		wrapper.className = wrapClassName;
+		var parent = node.parentNode;
+		parent.replaceChild(wrapper, node);
+		wrapper.appendChild(node);
+		return wrapper;
 	}
 
 	function wrapNodeEmoji(node) {
@@ -138,22 +164,15 @@ var emojiCensor = (function () {
 		return wrapText(node, blocks);
 	}
 
-	function wrapAllEmoji(selector) {
+	function wrapAllEmoji(selector, options) {
 		if (!selector) return [];
+		options = options || {};
 
 		var NF = window.NodeFilter;
 		var whatToShow = NF.SHOW_TEXT;
 		var nodeList = [];
 
-		var elems;
-		if (selector instanceof HTMLElement) {
-			elems = [selector];
-		} else if (Array.isArray(selector) || selector instanceof NodeList) {
-			elems = selector;
-		} else {
-			elems = document.querySelectorAll(selector)
-		};
-		Array.prototype.forEach.call(elems, function (elem) {
+		getElementArray(selector).forEach(function (elem) {
 			// Set up a DOM node walker for all text nodes in this element
 			var walker = elem.ownerDocument.createTreeWalker(elem, whatToShow, {
 				acceptNode: function (node) {
@@ -162,12 +181,9 @@ var emojiCensor = (function () {
 			});
 			var node;
 			while ((node = walker.nextNode())) {
-				// Don't re-add this node if it's already queued to be processed
-				if (node.emojiCensorQueued) {
-					continue;
-				}
-				// Skip this node if it's already part of a redaction
-				if (node.parentNode && node.parentNode.classList.contains(classes.redacted)) {
+				// Don't re-add this node if it's already queued to be processed,
+				// or if it's already part of a redaction
+				if (node.emojiCensorQueued || hasBeenRedacted(node)) {
 					continue;
 				}
 				// Add this node to the list and mark it as queued for processing
@@ -176,13 +192,22 @@ var emojiCensor = (function () {
 			}
 		});
 
-		return nodeList.map(wrapNodeEmoji).reduce(function (m, a) {
+		var redactedNodes = nodeList.map(wrapNodeEmoji).reduce(function (m, a) {
 			return m.concat(a);
 		}, []);
+
+		if (options.customDisplayElements) {
+			var extraNodes = getElementArray(options.customDisplayElements).filter(function (node) {
+				return !hasBeenRedacted(node);
+			}).map(wrapWholeNode);
+			redactedNodes = redactedNodes.concat(extraNodes);
+		}
+
+		return redactedNodes;
 	}
 
-	function redactElements(selector) {
-		var wrapped = wrapAllEmoji(selector);
+	function redactElements(selector, options) {
+		var wrapped = wrapAllEmoji(selector, options);
 		if (!wrapped.length) {
 			return wrapped;
 		}
