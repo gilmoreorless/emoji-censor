@@ -31,11 +31,15 @@ emojiCensor.speakCensored('What a nice cat. 🐱');
 
 This will announce `"What a nice cat. [bleep]"` using text-to-speech synthesis.
 
-### `redactElements(selector)`
+### `redactElements(elementsOrSelector)`
 
 Applies [redaction](https://en.wikipedia.org/wiki/Sanitization_(classified_information)) to HTML elements by blacking out emoji characters.
 
-The `selector` argument is any valid CSS selector that can be passed to `document.querySelectorAll()`.
+The `elementsOrSelector` argument determines which elements to redact. It can be:
+
+* A single DOM element.
+* An array or `NodeList` of DOM elements.
+* A string of any valid CSS selector that can be passed to `document.querySelectorAll()`.
 
 ```js
 // Example: This will black out any emoji within `.content` and its children.
@@ -43,6 +47,15 @@ emojiCensor.redactElements('.content');
 ```
 
 This API is also aliased as `emojiCensor.redactioAdAbsurdum()`, purely because I liked the pun.
+
+### `redactedCount()`
+
+Returns the number of redacted emoji characters found in the current `document`.
+
+```js
+emojiCensor.redactedCount();
+// 12
+```
 
 ### Utilities
 

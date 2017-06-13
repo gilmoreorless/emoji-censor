@@ -39,6 +39,19 @@ var emojiCensor = (function () {
 		});
 	}
 
+	var excludeRedaction = {
+		'INPUT': true,
+		'SELECT': true,
+		'TEXTAREA': true,
+		'STYLE': true,
+		'SCRIPT': true,
+	};
+	function isRedactable(textNode) {
+		var parent = textNode.parentNode;
+		if (!parent) return false;
+		return !excludeRedaction.hasOwnProperty(parent.nodeName);
+	}
+
 	eggsports.hasEmoji = hasEmoji;
 	eggsports.splitText = splitText;
 
@@ -144,7 +157,7 @@ var emojiCensor = (function () {
 			// Set up a DOM node walker for all text nodes in this element
 			var walker = elem.ownerDocument.createTreeWalker(elem, whatToShow, {
 				acceptNode: function (node) {
-					return hasEmoji(node.textContent) ? NF.FILTER_ACCEPT : NF.FILTER_REJECT;
+					return isRedactable(node) && hasEmoji(node.textContent) ? NF.FILTER_ACCEPT : NF.FILTER_REJECT;
 				}
 			});
 			var node;
