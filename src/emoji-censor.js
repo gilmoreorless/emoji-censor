@@ -95,7 +95,7 @@ var emojiCensor = (function () {
 		stylesheet.id = stylesheetId;
 		stylesheet.textContent =
 			'.' + classes.redacted + ' { display: inline-block; position: relative; }\n' +
-			'.' + classes.blackout + ' { display: none; background-color: black; position: absolute; left: -1px; top: 0; }\n' +
+			'.' + classes.blackout + ' { display: none; background-color: black; position: absolute; left: -1px; top: 0; width: calc(100% + 2px); height: 100%; }\n' +
 			'.' + classes.redacted + ' .' + classes.blackout + ' { display: inline-block; }';
 		// Insert the node before any other styles so users can override them if necessary
 		var referenceNode = document.querySelector('link, style');
@@ -212,17 +212,10 @@ var emojiCensor = (function () {
 			return wrapped;
 		}
 
-		// Grab all dimensions in one pass to avoid layout thrashing
-		var dims = wrapped.map(function (node) { return node.getBoundingClientRect(); });
-
 		addStyles();
 		wrapped.forEach(function (node, i) {
-			var width = dims[i].width + 2;
-			var height = dims[i].height;
 			var span = node.ownerDocument.createElement('span');
 			span.className = classes.blackout;
-			span.style.width = width + 'px';
-			span.style.height = height + 'px';
 			node.classList.add(classes.redacted);
 			node.appendChild(span);
 		});
