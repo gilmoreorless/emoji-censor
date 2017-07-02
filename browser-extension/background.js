@@ -35,6 +35,22 @@ var actionTitle = {
 	inactive: 'Censor all emoji'
 };
 
+function pad(n) {
+	return ('00' + n).substr(-2);
+}
+function log(...args) {
+	var now = new Date();
+	var stamp = [now.getHours(), now.getMinutes(), now.getSeconds()].map(pad).join(':');
+	var stampArg = '%c[' + stamp + ']';
+	var stampStyle = 'color:#999';
+	if (typeof args[0] === 'string' && args[0].indexOf('%c') > -1) {
+		args.splice(0, 1, stampArg + ' ' + args[0], stampStyle);
+	} else {
+		args.unshift(stampArg, stampStyle);
+	}
+	console.log(...args);
+}
+
 function getCountText(count) {
 	if (count <= 999) {
 		return count.toString();
@@ -58,11 +74,13 @@ function setBadgeColor(tabId, color) {
 }
 
 function setTotalCount(tabId, count) {
+	log('setTotalCount', tabId, count);
 	setBadgeColor(tabId, colors.good);
 	setBadgeCount(tabId, isCensoringActive ? count : '');
 }
 
 function ensureTabStatus(tabId) {
+	log('ensureTabStatus', tabId);
 	chrome.tabs.sendMessage(tabId, {
 		msg: isCensoringActive ? 'setActive' : 'setInactive'
 	});
@@ -70,6 +88,7 @@ function ensureTabStatus(tabId) {
 
 function toggleStatus() {
 	isCensoringActive = !isCensoringActive;
+	log('toggleStatus, active =', isCensoringActive);
 	chrome.tabs.query({ active: true }, function (tabs) {
 		tabs.forEach(function (tab) {
 			ensureTabStatus(tab.id);
@@ -82,8 +101,10 @@ function toggleStatus() {
 
 function contentScriptMessageHandler(request, sender, sendResponse) {
 	if (sender.tab && request.msg) {
+		log('%cruntime.onMessage', 'color:green;font-weight:bold', request, sender);
 		switch (request.msg) {
 			case 'isGlobalActive':
+				log('  [response]:', isCensoringActive);
 				sendResponse({ isActive: isCensoringActive });
 				break;
 			case 'totalRedacted':

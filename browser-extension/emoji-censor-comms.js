@@ -26,13 +26,23 @@ function redact(elems) {
 	emojiCensor.redactElements(elems, options);
 }
 
+function pad(n) {
+	return ('00' + n).substr(-2);
+}
+function log(...args) {
+	var now = new Date();
+	var stamp = [now.getHours(), now.getMinutes(), now.getSeconds()].map(pad).join(':');
+	args.unshift('%c[emoji-censor ' + stamp + ']', 'color:#999');
+	console.log(...args);
+}
+
 var observerConfig = {
 	characterData: true,
 	childList: true,
 	subtree: true,
 };
 var observer = new MutationObserver(function (mutations) {
-	console.log('observer', mutations);
+	log('observer', mutations);
 	mutations.forEach(function (mutation) {
 		if (mutation.type === 'childList') {
 			redact(mutation.addedNodes);
@@ -44,7 +54,7 @@ var observer = new MutationObserver(function (mutations) {
 });
 
 function setIsActive(isNowActive) {
-	console.log('setIsActive', isNowActive);
+	log('setIsActive', isNowActive);
 	isNowActive = !!isNowActive;
 	if (isNowActive === isCensoringActive) {
 		return;
@@ -67,15 +77,16 @@ function setIsActive(isNowActive) {
 }
 
 function getGlobalStatus() {
-	console.log('getGlobalStatus')
+	log('getGlobalStatus')
 	chrome.runtime.sendMessage({ msg: 'isGlobalActive' }, function (response) {
-		console.log('isGlobalActive response', response);
+		log('isGlobalActive response', response);
 		setIsActive(response.isActive);
 	});
 }
 
 function sendTotalCount(explicitCount) {
 	var count = explicitCount !== undefined ? explicitCount : emojiCensor.redactedCount();
+	log('sendTotalCount', count);
 	chrome.runtime.sendMessage({
 		msg: 'totalRedacted',
 		count: count
@@ -83,16 +94,19 @@ function sendTotalCount(explicitCount) {
 }
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+	log('runtime.onMessage', request);
 	switch (request.msg) {
 		case 'setActive': setIsActive(true); break;
 		case 'setInactive': setIsActive(false); break;
 		case 'isPageActive':
+			log('  [response]:', isCensoringActive);
 			sendResponse({ isActive: isCensoringActive });
 			break;
 	}
 });
 
 function checkReadyState() {
+	log('checkReadyState', document.readyState);
 	if (document.readyState === 'complete') {
 		getGlobalStatus();
 	}
