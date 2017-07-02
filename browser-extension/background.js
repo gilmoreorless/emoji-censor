@@ -22,7 +22,11 @@
  *   • totalRedacted {count: int}
  */
 
-var isCensoringActive = false;
+///// CONFIG /////
+
+var state = {
+	isCensoringActive: false
+};
 
 var colors = {
 	good: 'hsl(126, 93%, 33%)',
@@ -34,6 +38,9 @@ var actionTitle = {
 	active: 'Stop censoring emoji',
 	inactive: 'Censor all emoji'
 };
+
+
+///// DEBUG LOGGING /////
 
 function pad(n) {
 	return ('00' + n).substr(-2);
@@ -50,6 +57,9 @@ function log(...args) {
 	}
 	console.log(...args);
 }
+
+
+///// ICON BADGING /////
 
 function getCountText(count) {
 	if (count <= 999) {
@@ -76,27 +86,34 @@ function setBadgeColor(tabId, color) {
 function setTotalCount(tabId, count) {
 	log('setTotalCount', tabId, count);
 	setBadgeColor(tabId, colors.good);
-	setBadgeCount(tabId, isCensoringActive ? count : '');
+	setBadgeCount(tabId, state.isCensoringActive ? count : '');
 }
+
+
+///// LIFECYCLE /////
 
 function ensureTabStatus(tabId) {
 	log('ensureTabStatus', tabId);
 	chrome.tabs.sendMessage(tabId, {
-		msg: isCensoringActive ? 'setActive' : 'setInactive'
+		msg: state.isCensoringActive ? 'setActive' : 'setInactive'
 	});
 }
 
-function toggleStatus() {
-	isCensoringActive = !isCensoringActive;
-	log('toggleStatus, active =', isCensoringActive);
-	chrome.tabs.query({ active: true }, function (tabs) {
-		tabs.forEach(function (tab) {
-			ensureTabStatus(tab.id);
-		});
-	});
-	chrome.browserAction.setTitle({
-		title: actionTitle[isCensoringActive ? 'active' : 'inactive']
-	});
+function saveState() {
+	log('saveState', state);
+	localStorage.setItem('state', JSON.stringify(state));
+}
+
+function restoreState() {
+	try {
+		var savedState = JSON.parse(localStorage.getItem('state'));
+		log('restoreState', savedState);
+		if (savedState) {
+			state = savedState;
+		}
+	} catch (e) {
+		log('restoreState FAILED, state =', state);
+	}
 }
 
 function contentScriptMessageHandler(request, sender, sendResponse) {
@@ -104,8 +121,8 @@ function contentScriptMessageHandler(request, sender, sendResponse) {
 		log('%cruntime.onMessage', 'color:green;font-weight:bold', request, sender);
 		switch (request.msg) {
 			case 'isGlobalActive':
-				log('  [response]:', isCensoringActive);
-				sendResponse({ isActive: isCensoringActive });
+				log('  [response]:', state.isCensoringActive);
+				sendResponse({ isActive: state.isCensoringActive });
 				break;
 			case 'totalRedacted':
 				setTotalCount(sender.tab.id, request.count);
@@ -114,8 +131,29 @@ function contentScriptMessageHandler(request, sender, sendResponse) {
 	}
 }
 
-chrome.browserAction.onClicked.addListener(toggleStatus);
 chrome.runtime.onMessage.addListener(contentScriptMessageHandler);
+chrome.runtime.onSuspend.addListener(saveState);
 chrome.tabs.onActivated.addListener(function (activeInfo) {
 	ensureTabStatus(activeInfo.tabId);
 });
+
+log('--- event page loaded ---');
+restoreState();
+
+
+///// USER ACTIONS /////
+
+function toggleStatus() {
+	state.isCensoringActive = !state.isCensoringActive;
+	log('toggleStatus, active =', state.isCensoringActive);
+	chrome.tabs.query({ active: true }, function (tabs) {
+		tabs.forEach(function (tab) {
+			ensureTabStatus(tab.id);
+		});
+	});
+	chrome.browserAction.setTitle({
+		title: actionTitle[state.isCensoringActive ? 'active' : 'inactive']
+	});
+}
+
+chrome.browserAction.onClicked.addListener(toggleStatus);
