@@ -98,10 +98,6 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 	switch (request.msg) {
 		case 'setActive': setIsActive(true); break;
 		case 'setInactive': setIsActive(false); break;
-		case 'isPageActive':
-			log('  [response]:', isCensoringActive);
-			sendResponse({ isActive: isCensoringActive });
-			break;
 	}
 });
 

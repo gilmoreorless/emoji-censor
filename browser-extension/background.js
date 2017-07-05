@@ -15,7 +15,6 @@
  * › Background -> content
  *   • setActive
  *   • setInactive
- *   • isPageActive -> returns boolean
  * 
  * › Content -> background
  *   • isGlobalActive -> returns boolean
