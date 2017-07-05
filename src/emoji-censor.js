@@ -42,9 +42,11 @@ var emojiCensor = (function () {
 	var excludeRedaction = {
 		'INPUT': true,
 		'SELECT': true,
+		'OPTION': true,
 		'TEXTAREA': true,
 		'STYLE': true,
 		'SCRIPT': true,
+		'IFRAME': true,
 	};
 	function isRedactable(textNode) {
 		var parent = textNode.parentNode;
@@ -58,12 +60,12 @@ var emojiCensor = (function () {
 
 	function getElementArray(elemsOrSelector) {
 		var elems;
-		if (elemsOrSelector instanceof HTMLElement) {
-			elems = [elemsOrSelector];
+		if (typeof elemsOrSelector === 'string' || elemsOrSelector instanceof String) {
+			elems = document.querySelectorAll(elemsOrSelector);
 		} else if (Array.isArray(elemsOrSelector) || elemsOrSelector instanceof NodeList) {
 			elems = elemsOrSelector;
 		} else {
-			elems = document.querySelectorAll(elemsOrSelector);
+			elems = [elemsOrSelector];
 		};
 		return Array.prototype.slice.call(elems);
 	}
