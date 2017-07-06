@@ -43,7 +43,7 @@ The `elementsOrSelector` argument determines which elements to redact. It can be
 
 An `options` object can also be provided for additional functionality.
 Currently there is only one option — `customDisplayElements`. This is an `elementsOrSelector`-style value that determines extra elements to redact.
-This is different from the main arguments as these elements are wholly redacted — no text substitution is performed. This is useful for sites that use custom image fallbacks instead of emoji text characters.
+This is different from the main arguments as these elements are wholly redacted — no text substitution is performed. This is useful for sites that use custom image fallbacks instead of emoji text characters, where the whole image has to be redacted.
 
 ```js
 // Example: This will black out any emoji within `.content` and its children.
@@ -72,9 +72,12 @@ There are some simple utility methods that are required to make the main methods
 
 Tests if the provided `text` contains emoji characters, returning a boolean. This is just a wrapper around the [emoji-regex](https://github.com/mathiasbynens/emoji-regex) library.
 
+**Technical note:** This script matches all characters that are listed by the [Unicode Technical Report #51](http://www.unicode.org/reports/tr51/) as having the property `Emoji=yes`. These characters may or may not appear as coloured glyphs, it entirely depends on your browser and operating system.
+The only exception is that I have deliberately excluded the following characters: `0`-`9` (all numbers), `#`, `*`, `©`, `®`, `™`.
+
 ```js
-emojiCensor.hasEmoji('Approved ✔');  // false
-emojiCensor.hasEmoji('Approved ✅');  // true
+emojiCensor.hasEmoji('⦿ Selected');  // false
+emojiCensor.hasEmoji('🔘 Selected');  // true
 ```
 
 #### `splitText(text)`
