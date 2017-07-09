@@ -1,20 +1,37 @@
+extdir = browser-extension
+extjs = $(extdir)/emoji-censor.js
+extzip-chrome = chrome-extension.zip
+
 iconsrc := src/icon-256.png
 iconsizes := {16,32,48,128,256}
-icondir := browser-extension/icons
+icondir := $(extdir)/icons
 iconfiles := $(shell echo $(icondir)/icon-$(iconsizes).png)
 
 $(icondir)/icon-%.png: $(iconsrc)
 	@mkdir -p $(@D)
 	convert $(iconsrc) -resize $* $@
 
-browser-extension/emoji-censor.js: src/emoji-censor.js
+extension-metadata/chrome-webstore/icon-128.png: $(iconsrc)
+	convert $(iconsrc) -resize 106 -bordercolor transparent -border 11 $@
+
+$(extjs): src/emoji-censor.js
 	cp src/emoji-censor.js $@
 
-icons: $(iconfiles)
+$(extzip-chrome): $(iconfiles) $(extjs)
+	cp LICENSE $(extdir)
+	zip -r $(extzip-chrome) $(extdir) -x \*\/.DS_Store -x \*\/TODO.\*
+	rm -f $(extdir)/LICENSE
 
-ext: browser-extension/emoji-censor.js
+
+icons: $(iconfiles) extension-metadata/chrome-webstore/icon-128.png
+
+extjs: $(extjs)
+
+zip: $(extzip-chrome)
 
 clean:
 	rm -f $(iconfiles)
+	rm -f $(extjs)
+	rm -f *-extension.zip
 
-.PHONY: icons ext clean
+.PHONY: icons extjs zip clean
