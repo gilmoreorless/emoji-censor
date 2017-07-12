@@ -1,6 +1,8 @@
 var emojiCensor = (function () {
 
-	var eggsports = {};
+	var eggsports = {
+		version: '1.1.0'
+	};
 
 
 	/**
