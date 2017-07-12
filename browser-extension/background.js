@@ -23,6 +23,8 @@
 
 ///// CONFIG /////
 
+var DEBUG = false;
+
 var state = {
 	isCensoringActive: false
 };
@@ -45,6 +47,9 @@ function pad(n) {
 	return ('00' + n).substr(-2);
 }
 function log(...args) {
+	if (!DEBUG) {
+		return;
+	}
 	var now = new Date();
 	var stamp = [now.getHours(), now.getMinutes(), now.getSeconds()].map(pad).join(':');
 	var stampArg = '%c[' + stamp + ']';

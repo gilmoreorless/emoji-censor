@@ -9,6 +9,8 @@
  *     - On removed content, look for removed redactions and update count
  */
 
+var DEBUG = false;
+
 var specialCases = [
 	['twitter.com', '.Emoji'],
 	['mobile.twitter.com', 'img[src*="twimg.com/emoji/"]'],
@@ -30,6 +32,9 @@ function pad(n) {
 	return ('00' + n).substr(-2);
 }
 function log(...args) {
+	if (!DEBUG) {
+		return;
+	}
 	var now = new Date();
 	var stamp = [now.getHours(), now.getMinutes(), now.getSeconds()].map(pad).join(':');
 	args.unshift('%c[emoji-censor ' + stamp + ']', 'color:#999');
