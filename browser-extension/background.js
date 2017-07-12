@@ -136,7 +136,6 @@ function contentScriptMessageHandler(request, sender, sendResponse) {
 }
 
 chrome.runtime.onMessage.addListener(contentScriptMessageHandler);
-chrome.runtime.onSuspend.addListener(saveState);
 chrome.tabs.onActivated.addListener(function (activeInfo) {
 	ensureTabStatus(activeInfo.tabId);
 });
@@ -158,6 +157,7 @@ function toggleStatus() {
 	chrome.browserAction.setTitle({
 		title: actionTitle[state.isCensoringActive ? 'active' : 'inactive']
 	});
+	saveState();
 }
 
 chrome.browserAction.onClicked.addListener(toggleStatus);
