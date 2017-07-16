@@ -9,6 +9,8 @@
  *     - On removed content, look for removed redactions and update count
  */
 
+///// CONFIG /////
+
 var DEBUG = false;
 
 var specialCases = [
@@ -18,15 +20,8 @@ var specialCases = [
 
 var isCensoringActive = false;
 
-function redact(elems) {
-	var options = {};
-	specialCases.forEach(function (rule) {
-		if (location.hostname === rule[0]) {
-			options.customDisplayElements = rule[1];
-		}
-	});
-	emojiCensor.redactElements(elems, options);
-}
+
+///// DEBUG LOGGING /////
 
 function pad(n) {
 	return ('00' + n).substr(-2);
@@ -39,6 +34,19 @@ function log(...args) {
 	var stamp = [now.getHours(), now.getMinutes(), now.getSeconds()].map(pad).join(':');
 	args.unshift('%c[emoji-censor ' + stamp + ']', 'color:#999');
 	console.log(...args);
+}
+
+
+///// REDACTION /////
+
+function redact(elems) {
+	var options = {};
+	specialCases.forEach(function (rule) {
+		if (location.hostname === rule[0]) {
+			options.customDisplayElements = rule[1];
+		}
+	});
+	emojiCensor.redactElements(elems, options);
 }
 
 var observerConfig = {
@@ -81,9 +89,40 @@ function setIsActive(isNowActive) {
 	}
 }
 
+
+///// COMMUNICATION & LIFECYCLE /////
+
+var runtimeOnMessage, runtimeSendMessage;
+if (typeof browser !== 'undefined') {
+	runtimeOnMessage = browser.runtime.onMessage;
+	runtimeSendMessage = function (message, onResponse) {
+		var promise = browser.runtime.sendMessage(message);
+		return onResponse ? promise.then(onResponse) : promise;
+	};
+} else {
+	runtimeOnMessage = chrome.runtime.onMessage;
+	runtimeSendMessage = function (message, onResponse) {
+		var promise = new Promise((resolve, reject) => {
+			if (onResponse) {
+				chrome.runtime.sendMessage(message, function (...resArgs) {
+					if (chrome.runtime.lastError) {
+						reject(chrome.runtime.lastError);
+						return;
+					}
+					resolve(...resArgs);
+				});
+			} else {
+				chrome.runtime.sendMessage(message);
+				resolve();
+			}
+		});
+		return onResponse ? promise.then(onResponse) : promise;
+	};
+}
+
 function getGlobalStatus() {
 	log('getGlobalStatus')
-	chrome.runtime.sendMessage({ msg: 'isGlobalActive' }, function (response) {
+	runtimeSendMessage({ msg: 'isGlobalActive' }, function (response) {
 		log('isGlobalActive response', response);
 		setIsActive(response.isActive);
 	});
@@ -92,13 +131,13 @@ function getGlobalStatus() {
 function sendTotalCount(explicitCount) {
 	var count = explicitCount !== undefined ? explicitCount : emojiCensor.redactedCount();
 	log('sendTotalCount', count);
-	chrome.runtime.sendMessage({
+	runtimeSendMessage({
 		msg: 'totalRedacted',
 		count: count
 	});
 }
 
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+runtimeOnMessage.addListener(function (request, sender, sendResponse) {
 	log('runtime.onMessage', request);
 	switch (request.msg) {
 		case 'setActive': setIsActive(true); break;

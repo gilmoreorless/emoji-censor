@@ -63,6 +63,44 @@ function log(...args) {
 }
 
 
+///// WEBEXTENSIONS POLYFILL /////
+/**
+ * NOTE: This is suuuuuper-simple polyfill, only replacing the APIs that are used in this file.
+ * The concept is based on https://github.com/mozilla/webextension-polyfill
+ * but trimmed down to keep dependencies to a minimum.
+ */
+
+if (typeof browser === 'undefined') {
+	var promisedCallback = function (origFn) {
+		return function (...args) {
+			return new Promise((resolve, reject) => {
+				origFn(...args, function (...resArgs) {
+					if (chrome.runtime.lastError) {
+						reject(chrome.runtime.lastError);
+						return;
+					}
+					resolve(...resArgs);
+				});
+			});
+		}
+	};
+
+	var makeProxy = function (target, promiseKeys) {
+		promiseKeys = promiseKeys || [];
+		return new Proxy(target, {
+			get: function (obj, key) {
+				return promiseKeys.includes(key) ? promisedCallback(obj[key]) : obj[key];
+			}
+		})
+	};
+
+	window.browser = {};
+	browser.browserAction = makeProxy(chrome.browserAction);
+	browser.runtime = makeProxy(chrome.runtime);
+	browser.tabs = makeProxy(chrome.tabs, ['query']);
+}
+
+
 ///// ICON BADGING /////
 
 function getCountText(count) {
@@ -77,11 +115,11 @@ function setBadgeCount(tabId, count) {
 	if (count != null && count !== '') {
 		badgeOptions.text = getCountText(count);
 	}
-	chrome.browserAction.setBadgeText(badgeOptions);
+	browser.browserAction.setBadgeText(badgeOptions);
 }
 
 function setBadgeColor(tabId, color) {
-	chrome.browserAction.setBadgeBackgroundColor({
+	browser.browserAction.setBadgeBackgroundColor({
 		tabId: tabId,
 		color: color
 	});
@@ -98,7 +136,7 @@ function setTotalCount(tabId, count) {
 
 function ensureTabStatus(tabId) {
 	log('ensureTabStatus', tabId);
-	chrome.tabs.sendMessage(tabId, {
+	browser.tabs.sendMessage(tabId, {
 		msg: state.isCensoringActive ? 'setActive' : 'setInactive'
 	});
 }
@@ -135,8 +173,8 @@ function contentScriptMessageHandler(request, sender, sendResponse) {
 	}
 }
 
-chrome.runtime.onMessage.addListener(contentScriptMessageHandler);
-chrome.tabs.onActivated.addListener(function (activeInfo) {
+browser.runtime.onMessage.addListener(contentScriptMessageHandler);
+browser.tabs.onActivated.addListener(function (activeInfo) {
 	ensureTabStatus(activeInfo.tabId);
 });
 
@@ -149,15 +187,15 @@ restoreState();
 function toggleStatus() {
 	state.isCensoringActive = !state.isCensoringActive;
 	log('toggleStatus, active =', state.isCensoringActive);
-	chrome.tabs.query({ active: true }, function (tabs) {
+	browser.tabs.query({ active: true }).then(function (tabs) {
 		tabs.forEach(function (tab) {
 			ensureTabStatus(tab.id);
 		});
 	});
-	chrome.browserAction.setTitle({
+	browser.browserAction.setTitle({
 		title: actionTitle[state.isCensoringActive ? 'active' : 'inactive']
 	});
 	saveState();
 }
 
-chrome.browserAction.onClicked.addListener(toggleStatus);
+browser.browserAction.onClicked.addListener(toggleStatus);
