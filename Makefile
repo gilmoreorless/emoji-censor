@@ -3,7 +3,7 @@ extjs = $(extdir)/emoji-censor.js
 extzip = extension.zip
 
 iconsrc := src/icon-256.png
-iconsizes := {16,32,48,128,256}
+iconsizes := {16,32,48,64,128,256}
 icondir := $(extdir)/icons
 iconfiles := $(shell echo $(icondir)/icon-$(iconsizes).png)
 

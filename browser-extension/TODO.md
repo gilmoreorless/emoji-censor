@@ -2,7 +2,6 @@
 
 ## Extension infrastructure
 
-* Publish to various web stores
 * Add links to README and demo page
 
 ## UI / behaviour
