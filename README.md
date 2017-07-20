@@ -14,6 +14,12 @@ Really, this all started with a tweet from [Ben Buchanan](http://weblog.200ok.co
 
 The best way to describe it properly is to just link to the demo, so go play with it: [gilmoreorless.github.io/emoji-censor](https://gilmoreorless.github.io/emoji-censor/)
 
+You can also try it as a browser extension, to visually block out all emoji as you browse the web.
+It’s available for [Chrome][ext-chrome] and [Firefox][ext-firefox].
+
+[ext-chrome]: https://chrome.google.com/webstore/detail/emoji-censor/heceohcbaahlibmaeheomnkpmhnggnld
+[ext-firefox]: https://addons.mozilla.org/addon/emoji-censor/
+
 
 ## Usage
 
