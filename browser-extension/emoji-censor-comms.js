@@ -16,6 +16,7 @@ var DEBUG = false;
 var specialCases = [
 	['twitter.com', '.Emoji'],
 	['mobile.twitter.com', 'img[src*="twimg.com/emoji/"]'],
+	['www.facebook.com', 'img[src*="images/emoji.php"]'],
 ];
 
 var isCensoringActive = false;
