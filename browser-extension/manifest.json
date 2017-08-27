@@ -1,6 +1,6 @@
 {
 	"name": "Emoji Censor",
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"description": "Redacts all emoji characters on a page, replacing them with black boxes",
 	"manifest_version": 2,
 	"icons": {
@@ -20,9 +20,9 @@
 		"default_title": "Censor all emoji"
 	},
     "content_scripts": [{
-        "matches": ["*://*/*"],
-        "js": ["emoji-censor.js", "emoji-censor-comms.js"]
-    }],
+		"matches": ["*://*/*"],
+		"js": ["emoji-censor.js", "emoji-censor-comms.js"]
+	}],
 	"permissions": [
 		"*://*/*"
 	]
