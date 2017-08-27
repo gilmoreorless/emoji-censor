@@ -14,6 +14,7 @@
 var DEBUG = false;
 
 var specialCases = [
+	['*', 'img[src^="https://twemoji.maxcdn.com/"]'],
 	['twitter.com', '.Emoji'],
 	['mobile.twitter.com', 'img[src*="twimg.com/emoji/"]'],
 	['www.facebook.com', 'img[src*="images/emoji.php"]'],
@@ -42,11 +43,14 @@ function log(...args) {
 
 function redact(elems) {
 	var options = {};
-	specialCases.forEach(function (rule) {
-		if (location.hostname === rule[0]) {
-			options.customDisplayElements = rule[1];
-		}
+	var customSelectors = specialCases.filter(function (rule) {
+		return rule[0] === '*' || rule[0] === location.hostname;
+	}).map(function (rule) {
+		return rule[1];
 	});
+	if (customSelectors.length) {
+		options.customDisplayElements = customSelectors.join(',');
+	}
 	emojiCensor.redactElements(elems, options);
 }
 
