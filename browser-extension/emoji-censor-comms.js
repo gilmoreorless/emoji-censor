@@ -15,6 +15,7 @@ var DEBUG = false;
 
 var specialCases = [
 	['*', 'img[src^="https://twemoji.maxcdn.com/"]'],
+	['*', 'img[src^="https://s.w.org/images/core/emoji/"]'],
 	['twitter.com', '.Emoji'],
 	['mobile.twitter.com', 'img[src*="twimg.com/emoji/"]'],
 	['www.facebook.com', 'img[src*="images/emoji.php"]'],
