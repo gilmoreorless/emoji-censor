@@ -36,6 +36,7 @@ function log(...args) {
 	var now = new Date();
 	var stamp = [now.getHours(), now.getMinutes(), now.getSeconds()].map(pad).join(':');
 	args.unshift('%c[emoji-censor ' + stamp + ']', 'color:#999');
+	args.push(window.frameElement);
 	console.log(...args);
 }
 

@@ -21,7 +21,8 @@
 	},
     "content_scripts": [{
 		"matches": ["*://*/*"],
-		"js": ["emoji-censor.js", "emoji-censor-comms.js"]
+		"js": ["emoji-censor.js", "emoji-censor-comms.js"],
+		"all_frames": true
 	}],
 	"permissions": [
 		"*://*/*"

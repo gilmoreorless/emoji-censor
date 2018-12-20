@@ -103,6 +103,36 @@ if (typeof browser === 'undefined') {
 
 ///// ICON BADGING /////
 
+class MappyMap extends Map {
+	get(key) {
+		let value = super.get(key);
+		return value || new Map();
+	}
+}
+
+var tabCounts = new MappyMap();
+
+function addTabFrameCount(tabId, frameId, count) {
+	var tabFrames = tabCounts.get(tabId);
+	tabFrames.set(frameId, count);
+	tabCounts.set(tabId, tabFrames);
+}
+
+function resetTabCount(tabId) {
+	if (tabCounts.has(tabId)) {
+		tabCounts.set(tabId, new Map());
+	}
+}
+
+function getTabCount(tabId) {
+	var count = 0
+	var tabFrames = tabCounts.get(tabId);
+	for (let frameCount of tabFrames.values()) {
+		count += frameCount;
+	}
+	return count;
+}
+
 function getCountText(count) {
 	if (count <= 999) {
 		return count.toString();
@@ -125,10 +155,11 @@ function setBadgeColor(tabId, color) {
 	});
 }
 
-function setTotalCount(tabId, count) {
-	log('setTotalCount', tabId, count);
+function setTotalCount(tabId, frameId, count) {
+	log('setTotalCount', { tabId, frameId, count });
 	setBadgeColor(tabId, colors.good);
-	setBadgeCount(tabId, state.isCensoringActive ? count : '');
+	addTabFrameCount(tabId, frameId, count);
+	setBadgeCount(tabId, state.isCensoringActive ? getTabCount(tabId) : '');
 }
 
 
@@ -167,9 +198,17 @@ function contentScriptMessageHandler(request, sender, sendResponse) {
 				sendResponse({ isActive: state.isCensoringActive });
 				break;
 			case 'totalRedacted':
-				setTotalCount(sender.tab.id, request.count);
+				setTotalCount(sender.tab.id, sender.frameId, request.count);
 				break;
 		}
+	}
+}
+
+function tabLoadingHandler(tabId, changeInfo) {
+	log('tabLoadingHandler', tabId, changeInfo);
+	// Reset counts when a tab loads a new page, to ensure old iframe counts are cleared
+	if (changeInfo.status === 'loading') {
+		resetTabCount(tabId);
 	}
 }
 
@@ -177,6 +216,7 @@ browser.runtime.onMessage.addListener(contentScriptMessageHandler);
 browser.tabs.onActivated.addListener(function (activeInfo) {
 	ensureTabStatus(activeInfo.tabId);
 });
+browser.tabs.onUpdated.addListener(tabLoadingHandler);
 
 log('--- event page loaded ---');
 restoreState();
@@ -195,6 +235,13 @@ function toggleStatus() {
 	browser.browserAction.setTitle({
 		title: actionTitle[state.isCensoringActive ? 'active' : 'inactive']
 	});
+	if (state.isCensoringActive) {
+		log('===ADD===')
+		browser.tabs.onUpdated.addListener(tabLoadingHandler);
+	} else {
+		log('===REMOVE===')
+		browser.tabs.onUpdated.removeListener(tabLoadingHandler);
+	}
 	saveState();
 }
 
