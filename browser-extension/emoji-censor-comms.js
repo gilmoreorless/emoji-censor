@@ -43,17 +43,55 @@ function log(...args) {
 
 ///// REDACTION /////
 
-function redact(elems) {
+var trackedCustomElements = new WeakMap();
+
+function redact(elems, rootNode, customHost) {
+	(rootNode || document).querySelectorAll('.emoji-censor-wrapped').forEach(el => {
+		el.classList.add('emoji-censor-redacted');
+	});
 	var options = {};
 	var customSelectors = specialCases.filter(function (rule) {
-		return rule[0] === '*' || rule[0] === location.hostname;
+		return (
+			rule[0] === '*' ||
+			rule[0] === location.hostname ||
+			(customHost && rule[0] === customHost)
+		);
 	}).map(function (rule) {
 		return rule[1];
 	});
 	if (customSelectors.length) {
 		options.customDisplayElements = customSelectors.join(',');
 	}
+	if (rootNode) {
+		options.rootNode = rootNode;
+	}
 	emojiCensor.redactElements(elems, options);
+}
+
+function unredact(rootNode) {
+	rootNode.querySelectorAll('.emoji-censor-redacted').forEach(el => {
+		el.classList.remove('emoji-censor-redacted');
+	});
+}
+
+function observerCallback(rootNode, customHost) {
+	return function (mutations) {
+		log('observer', mutations, rootNode, customHost);
+		mutations.forEach(function (mutation) {
+			if (mutation.type === 'childList') {
+				redact(mutation.addedNodes, rootNode, customHost);
+				// Clean up custom element MutationObservers that are no longer needed
+				mutation.removedNodes.forEach(function (node) {
+					if (trackedCustomElements.has(node)) {
+						trackedCustomElements.delete(node);
+					}
+				})
+			} else if (mutation.type === 'characterData') {
+				redact(mutation.target, rootNode, customHost);
+			}
+		});
+		sendTotalCount();
+	}
 }
 
 var observerConfig = {
@@ -61,17 +99,7 @@ var observerConfig = {
 	childList: true,
 	subtree: true,
 };
-var observer = new MutationObserver(function (mutations) {
-	log('observer', mutations);
-	mutations.forEach(function (mutation) {
-		if (mutation.type === 'childList') {
-			redact(mutation.addedNodes);
-		} else if (mutation.type === 'characterData') {
-			redact(mutation.target);
-		}
-	});
-	sendTotalCount();
-});
+var observer = new MutationObserver(observerCallback(document));
 
 function setIsActive(isNowActive) {
 	log('setIsActive', isNowActive);
@@ -81,15 +109,29 @@ function setIsActive(isNowActive) {
 	}
 	isCensoringActive = isNowActive;
 	if (isCensoringActive) {
-		document.querySelectorAll('.emoji-censor-wrapped').forEach(el => {
-			el.classList.add('emoji-censor-redacted');
-		});
 		redact(document.body);
-		sendTotalCount();
+		// Special case to redact <twitter-widget> custom elements
+		document.querySelectorAll('twitter-widget').forEach(widget => {
+			let root = widget.shadowRoot;
+			let twitterObserver;
+			redact(root, root, 'twitter.com');
+			if (trackedCustomElements.has(widget)) {
+				twitterObserver = trackedCustomElements.get(widget);
+			} else {
+				let cssClone = document.getElementById('emoji-censor-default-styles').cloneNode(true);
+				let style = root.querySelector('style');
+				style.parentNode.insertBefore(cssClone, style);
+				twitterObserver = new MutationObserver(observerCallback(root, 'twitter.com'));
+				trackedCustomElements.set(widget, twitterObserver);
+			}
+			twitterObserver.observe(root, observerConfig);
+		});
 		observer.observe(document.body, observerConfig);
+		sendTotalCount();
 	} else {
-		document.querySelectorAll('.emoji-censor-redacted').forEach(el => {
-			el.classList.remove('emoji-censor-redacted');
+		unredact(document);
+		document.querySelectorAll('twitter-widget').forEach(widget => {
+			unredact(widget.shadowRoot);
 		});
 		sendTotalCount(0);
 		observer.disconnect();
@@ -136,7 +178,13 @@ function getGlobalStatus() {
 }
 
 function sendTotalCount(explicitCount) {
-	var count = explicitCount !== undefined ? explicitCount : emojiCensor.redactedCount();
+	var count = explicitCount;
+	if (explicitCount === undefined) {
+		count = emojiCensor.redactedCount();
+		document.querySelectorAll('twitter-widget').forEach(widget => {
+			count += emojiCensor.redactedCount({ rootNode: widget.shadowRoot });
+		});
+	}
 	log('sendTotalCount', count);
 	runtimeSendMessage({
 		msg: 'totalRedacted',

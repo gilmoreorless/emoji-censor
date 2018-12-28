@@ -1,7 +1,7 @@
 var emojiCensor = (function () {
 
 	var eggsports = {
-		version: '1.2.0'
+		version: '1.3.0'
 	};
 
 
@@ -64,10 +64,10 @@ var emojiCensor = (function () {
 		return node.parentNode && node.parentNode.classList.contains(classes.redacted);
 	}
 
-	function getElementArray(elemsOrSelector) {
+	function getElementArray(elemsOrSelector, rootNode) {
 		var elems;
 		if (typeof elemsOrSelector === 'string' || elemsOrSelector instanceof String) {
-			elems = document.querySelectorAll(elemsOrSelector);
+			elems = (rootNode || document).querySelectorAll(elemsOrSelector);
 		} else if (Array.isArray(elemsOrSelector) || elemsOrSelector instanceof NodeList) {
 			elems = elemsOrSelector;
 		} else {
@@ -180,7 +180,7 @@ var emojiCensor = (function () {
 		var whatToShow = NF.SHOW_TEXT;
 		var nodeList = [];
 
-		getElementArray(selector).forEach(function (elem) {
+		getElementArray(selector, options.rootNode).forEach(function (elem) {
 			// Set up a DOM node walker for all text nodes in this element
 			var walker = elem.ownerDocument.createTreeWalker(elem, whatToShow, {
 				acceptNode: function (node) {
@@ -205,9 +205,10 @@ var emojiCensor = (function () {
 		}, []);
 
 		if (options.customDisplayElements) {
-			var extraNodes = getElementArray(options.customDisplayElements).filter(function (node) {
-				return !hasBeenRedacted(node);
-			}).map(wrapWholeNode);
+			var extraNodes = getElementArray(options.customDisplayElements, options.rootNode)
+				.filter(function (node) {
+					return !hasBeenRedacted(node);
+				}).map(wrapWholeNode);
 			redactedNodes = redactedNodes.concat(extraNodes);
 		}
 
@@ -231,8 +232,9 @@ var emojiCensor = (function () {
 		return wrapped;
 	}
 
-	function redactedCount() {
-		return document.querySelectorAll('.' + classes.redacted).length;
+	function redactedCount(options) {
+		options = options || {};
+		return (options.rootNode || document).querySelectorAll('.' + classes.redacted).length;
 	}
 
 	eggsports.redactElements = redactElements;
