@@ -48,8 +48,14 @@ The `elementsOrSelector` argument determines which elements to redact. It can be
 * A string of any valid CSS selector that can be passed to `document.querySelectorAll()`.
 
 An `options` object can also be provided for additional functionality.
-Currently there is only one option — `customDisplayElements`. This is an `elementsOrSelector`-style value that determines extra elements to redact.
-This is different from the main arguments as these elements are wholly redacted — no text substitution is performed. This is useful for sites that use custom image fallbacks instead of emoji text characters, where the whole image has to be redacted.
+The available options are:
+
+* `customDisplayElements` — an `elementsOrSelector`-style value that determines extra elements to redact.
+
+  This is different from the main arguments as these elements are wholly redacted — no text substitution is performed. This is useful for sites that use custom image fallbacks instead of emoji text characters, where the whole image has to be redacted.
+* `rootNode` — a DOM node that determines the starting point for redaction.
+
+  This defaults to `document`, and is generally only needed when you want to redact elements that don’t count as part of the main document (e.g. document fragments or shadow roots).
 
 ```js
 // Example: This will black out any emoji within `.content` and its children.
@@ -61,13 +67,22 @@ emojiCensor.redactElements('.article', { customDisplayElements: 'img.custom-emoj
 
 This API is also aliased as `emojiCensor.redactioAdAbsurdum()`, purely because I liked the pun.
 
-### `redactedCount()`
+### `redactedCount([options])`
 
-Returns the number of redacted emoji characters found in the current `document`.
+Returns the number of redacted emoji characters found in the current `document` (or custom `rootNode`, if provided).
+
+An `options` object can also be provided for additional functionality.
+The available options are:
+
+* `rootNode` — a DOM node that determines the starting point for redaction (the same functionality as `redactElements()`).
 
 ```js
 emojiCensor.redactedCount();
 // 12
+
+var embeddedTweet = document.querySelector('twitter-widget');
+emojiCensor.redactedCount({ rootNode: embeddedTweet.shadowRoot });
+// 5
 ```
 
 ### Utilities
