@@ -20,11 +20,12 @@
 		"default_title": "Censor all emoji"
 	},
 	"content_scripts": [{
-		"matches": ["*://*/*"],
-		"js": ["emoji-censor.js", "emoji-censor-comms.js"],
-		"all_frames": true
+		"matches": ["<all_urls>"],
+		"match_about_blank": true,
+		"all_frames": true,
+		"js": ["emoji-censor.js", "emoji-censor-comms.js"]
 	}],
 	"permissions": [
-		"*://*/*"
+		"<all_urls>"
 	]
 }

@@ -46,12 +46,17 @@ var actionTitle = {
 function pad(n) {
 	return ('00' + n).substr(-2);
 }
+function pad4(n) {
+	return ('0000' + n).substr(-4);
+}
 function log(...args) {
 	if (!DEBUG) {
 		return;
 	}
 	var now = new Date();
-	var stamp = [now.getHours(), now.getMinutes(), now.getSeconds()].map(pad).join(':');
+	var stamp = `${
+		[now.getHours(), now.getMinutes(), now.getSeconds()].map(pad).join(':')
+	}.${pad4(now.getMilliseconds())}`;
 	var stampArg = '%c[' + stamp + ']';
 	var stampStyle = 'color:#999';
 	if (typeof args[0] === 'string' && args[0].indexOf('%c') > -1) {

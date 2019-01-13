@@ -13,12 +13,21 @@
 
 var DEBUG = false;
 
+// Extra rules to apply on specific domains.
+// Used for sites & applications that replace emoji chars with custom images.
 var specialCases = [
-	['*', 'img[src^="https://twemoji.maxcdn.com/"]'],
-	['*', 'img[src^="https://s.w.org/images/core/emoji/"]'],
+	['*', 'img[src^="https://twemoji.maxcdn.com/"]'], // Twemoji library
+	['*', 'img[src^="https://s.w.org/images/core/emoji/"]'], // Any Wordpress site
 	['twitter.com', '.Emoji'],
 	['mobile.twitter.com', 'img[src*="twimg.com/emoji/"]'],
 	['www.facebook.com', 'img[src*="images/emoji.php"]'],
+];
+
+// Extra rules for about:blank pages.
+// If a query selector matches on the page, the page is associated with a specific domain.
+// Mainly useful for embedded Twitter widgets.
+var aboutBlankCases = [
+	['.timeline-Widget[data-iframe-title]', 'twitter.com'],
 ];
 
 var isCensoringActive = false;
@@ -29,12 +38,17 @@ var isCensoringActive = false;
 function pad(n) {
 	return ('00' + n).substr(-2);
 }
+function pad4(n) {
+	return ('0000' + n).substr(-4);
+}
 function log(...args) {
 	if (!DEBUG) {
 		return;
 	}
 	var now = new Date();
-	var stamp = [now.getHours(), now.getMinutes(), now.getSeconds()].map(pad).join(':');
+	var stamp = `${
+		[now.getHours(), now.getMinutes(), now.getSeconds()].map(pad).join(':')
+	}.${pad4(now.getMilliseconds())}`;
 	args.unshift('%c[emoji-censor ' + stamp + ']', 'color:#999');
 	args.push(window.frameElement);
 	console.log(...args);
@@ -44,23 +58,51 @@ function log(...args) {
 ///// REDACTION /////
 
 var trackedCustomElements = new WeakMap();
+var cachedCustomSelectors = new Map();
+
+// NOTE: customHost is undefined in the majority of cases
+function getCustomSelectors(customHost) {
+	if (!cachedCustomSelectors.has(customHost)) {
+		var customSelectors = specialCases.filter(function (rule) {
+			return (
+				rule[0] === '*' ||
+				rule[0] === location.hostname ||
+				(customHost && rule[0] === customHost)
+			);
+		}).map(function (rule) {
+			return rule[1];
+		});
+		// Check for Twitter widgets in iframes without a src attribute
+		// NOTE: Doesn't always work in Firefox — see https://bugzilla.mozilla.org/show_bug.cgi?id=1415539
+		if (location.href === 'about:blank') {
+			if (!document.body.firstChild) {
+				// Don't cache if there's no content yet
+				return customSelectors.join(',');
+			}
+			customSelectors = customSelectors.concat(
+				aboutBlankCases.filter(function (rule) {
+					return document.querySelector(rule[0])
+				}).map(function (rule) {
+					var hostRule = specialCases.find(function (hostRule) {
+						return hostRule[0] === rule[1];
+					});
+					return hostRule[1];
+				})
+			);
+		}
+		cachedCustomSelectors.set(customHost, customSelectors.join(','));
+	}
+	return cachedCustomSelectors.get(customHost);
+}
 
 function redact(elems, rootNode, customHost) {
 	(rootNode || document).querySelectorAll('.emoji-censor-wrapped').forEach(el => {
 		el.classList.add('emoji-censor-redacted');
 	});
 	var options = {};
-	var customSelectors = specialCases.filter(function (rule) {
-		return (
-			rule[0] === '*' ||
-			rule[0] === location.hostname ||
-			(customHost && rule[0] === customHost)
-		);
-	}).map(function (rule) {
-		return rule[1];
-	});
+	var customSelectors = getCustomSelectors(customHost);
 	if (customSelectors.length) {
-		options.customDisplayElements = customSelectors.join(',');
+		options.customDisplayElements = customSelectors;
 	}
 	if (rootNode) {
 		options.rootNode = rootNode;
