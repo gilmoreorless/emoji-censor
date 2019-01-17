@@ -17,7 +17,7 @@ extension-metadata/chrome-webstore/icon-128.png: $(iconsrc)
 $(extjs): src/emoji-censor.js
 	cp src/emoji-censor.js $@
 
-$(extzip): $(iconfiles) $(extjs)
+$(extzip): $(iconfiles) $(extjs) LICENSE
 	cp LICENSE $(extdir)
 	rm -f $(extzip)
 	cd $(extdir) && zip -r ../$(extzip) . -x .DS_Store -x TODO.\*
