@@ -1,6 +1,6 @@
 {
 	"name": "Emoji Censor",
-	"version": "1.2.1",
+	"version": "1.2.2",
 	"description": "Redacts all emoji characters on a page, replacing them with black boxes",
 	"manifest_version": 2,
 	"icons": {
