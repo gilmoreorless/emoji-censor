@@ -153,23 +153,4 @@
 	window.addEventListener('hashchange', function () {
 		setupFromUrl(true);
 	});
-
-	// Yup, I still like to know if anyone actually visits my sites
-	if (~location.hostname.indexOf('github.io')) {
-		var ga = window.ga = function () {
-			ga.q.push(arguments);
-		};
-		ga.q = [
-			['create', 'UA-8341018-3', 'auto'],
-			['send', 'pageview']
-		];
-		ga.l = +new Date();
-		// Make sure to load GA script after page load
-		window.addEventListener('load', function () {
-			var s = document.createElement('script');
-			s.src = 'https://ssl.google-analytics.com/analytics.js';
-			document.body.appendChild(s);
-		}, false);
-	}
-
 })();
