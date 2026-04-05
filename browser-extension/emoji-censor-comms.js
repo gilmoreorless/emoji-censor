@@ -183,37 +183,15 @@ function setIsActive(isNowActive) {
 
 ///// COMMUNICATION & LIFECYCLE /////
 
-var runtimeOnMessage, runtimeSendMessage;
-if (typeof browser !== 'undefined') {
-	runtimeOnMessage = browser.runtime.onMessage;
-	runtimeSendMessage = function (message, onResponse) {
-		var promise = browser.runtime.sendMessage(message);
-		return onResponse ? promise.then(onResponse) : promise;
-	};
-} else {
-	runtimeOnMessage = chrome.runtime.onMessage;
-	runtimeSendMessage = function (message, onResponse) {
-		var promise = new Promise((resolve, reject) => {
-			if (onResponse) {
-				chrome.runtime.sendMessage(message, function (...resArgs) {
-					if (chrome.runtime.lastError) {
-						reject(chrome.runtime.lastError);
-						return;
-					}
-					resolve(...resArgs);
-				});
-			} else {
-				chrome.runtime.sendMessage(message);
-				resolve();
-			}
-		});
-		return onResponse ? promise.then(onResponse) : promise;
+if (typeof browser === 'undefined') {
+	globalThis.browser = {
+		runtime: chrome.runtime,
 	};
 }
 
 function getGlobalStatus() {
 	log('getGlobalStatus')
-	runtimeSendMessage({ msg: 'isGlobalActive' }, function (response) {
+	browser.runtime.sendMessage({ msg: 'isGlobalActive' }).then(function (response) {
 		log('isGlobalActive response', response);
 		setIsActive(response.isActive);
 	});
@@ -228,13 +206,13 @@ function sendTotalCount(explicitCount) {
 		});
 	}
 	log('sendTotalCount', count);
-	runtimeSendMessage({
+	browser.runtime.sendMessage({
 		msg: 'totalRedacted',
 		count: count
 	});
 }
 
-runtimeOnMessage.addListener(function (request, sender, sendResponse) {
+browser.runtime.onMessage.addListener(function (request /*, sender, sendResponse */) {
 	log('runtime.onMessage', request);
 	switch (request.msg) {
 		case 'setActive': setIsActive(true); break;

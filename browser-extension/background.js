@@ -28,6 +28,7 @@ var DEBUG = false;
 var state = {
 	isCensoringActive: false
 };
+var hasLocalState = false; // Set to true after fetching from browser.storage
 
 var colors = {
 	good: 'hsl(126, 93%, 33%)',
@@ -44,10 +45,10 @@ var actionTitle = {
 ///// DEBUG LOGGING /////
 
 function pad(n) {
-	return ('00' + n).substr(-2);
+	return ('00' + n).slice(-2);
 }
 function pad4(n) {
-	return ('0000' + n).substr(-4);
+	return ('0000' + n).slice(-4);
 }
 function log(...args) {
 	if (!DEBUG) {
@@ -69,40 +70,12 @@ function log(...args) {
 
 
 ///// WEBEXTENSIONS POLYFILL /////
-/**
- * NOTE: This is suuuuuper-simple polyfill, only replacing the APIs that are used in this file.
- * The concept is based on https://github.com/mozilla/webextension-polyfill
- * but trimmed down to keep dependencies to a minimum.
- */
 
 if (typeof browser === 'undefined') {
-	var promisedCallback = function (origFn) {
-		return function (...args) {
-			return new Promise((resolve, reject) => {
-				origFn(...args, function (...resArgs) {
-					if (chrome.runtime.lastError) {
-						reject(chrome.runtime.lastError);
-						return;
-					}
-					resolve(...resArgs);
-				});
-			});
-		}
-	};
-
-	var makeProxy = function (target, promiseKeys) {
-		promiseKeys = promiseKeys || [];
-		return new Proxy(target, {
-			get: function (obj, key) {
-				return promiseKeys.includes(key) ? promisedCallback(obj[key]) : obj[key];
-			}
-		})
-	};
-
-	window.browser = {};
-	browser.browserAction = makeProxy(chrome.browserAction);
-	browser.runtime = makeProxy(chrome.runtime);
-	browser.tabs = makeProxy(chrome.tabs, ['query']);
+	globalThis.browser = {};
+	for (let key of ['action', 'runtime', 'storage', 'tabs']) {
+		browser[key] = chrome[key];
+	}
 }
 
 
@@ -150,11 +123,11 @@ function setBadgeCount(tabId, count) {
 	if (count != null && count !== '') {
 		badgeOptions.text = getCountText(count);
 	}
-	browser.browserAction.setBadgeText(badgeOptions);
+	browser.action.setBadgeText(badgeOptions);
 }
 
 function setBadgeColor(tabId, color) {
-	browser.browserAction.setBadgeBackgroundColor({
+	browser.action.setBadgeBackgroundColor({
 		tabId: tabId,
 		color: color
 	});
@@ -162,9 +135,11 @@ function setBadgeColor(tabId, color) {
 
 function setTotalCount(tabId, frameId, count) {
 	log('setTotalCount', { tabId, frameId, count });
-	setBadgeColor(tabId, colors.good);
-	addTabFrameCount(tabId, frameId, count);
-	setBadgeCount(tabId, state.isCensoringActive ? getTabCount(tabId) : '');
+	getState().then(function (state) {
+		setBadgeColor(tabId, colors.good);
+		addTabFrameCount(tabId, frameId, count);
+		setBadgeCount(tabId, state.isCensoringActive ? getTabCount(tabId) : '');
+	});
 }
 
 
@@ -172,25 +147,39 @@ function setTotalCount(tabId, frameId, count) {
 
 function ensureTabStatus(tabId) {
 	log('ensureTabStatus', tabId);
-	browser.tabs.sendMessage(tabId, {
-		msg: state.isCensoringActive ? 'setActive' : 'setInactive'
+	getState().then(function (state) {
+		browser.tabs.sendMessage(tabId, {
+			msg: state.isCensoringActive ? 'setActive' : 'setInactive'
+		});
 	});
 }
 
 function saveState() {
 	log('saveState', state);
-	localStorage.setItem('state', JSON.stringify(state));
+	browser.storage.local.set({ state });
+}
+
+function getState() {
+	log('getState, hasLocal =', hasLocalState);
+	if (hasLocalState) {
+		return Promise.resolve(state);
+	}
+	return restoreState();
 }
 
 function restoreState() {
 	try {
-		var savedState = JSON.parse(localStorage.getItem('state'));
-		log('restoreState', savedState);
-		if (savedState) {
-			state = savedState;
-		}
+		log('restoreState, hasLocal =', hasLocalState);
+		var promise = browser.storage.local.get({ state }).then(function (data) {
+			state = data.state;
+			hasLocalState = true;
+			log('restoreState, got local', state);
+			return state;
+		});
+		return promise;
 	} catch (e) {
 		log('restoreState FAILED, state =', state);
+		return Promise.reject(e);
 	}
 }
 
@@ -199,9 +188,11 @@ function contentScriptMessageHandler(request, sender, sendResponse) {
 		log('%cruntime.onMessage', 'color:green;font-weight:bold', request, sender);
 		switch (request.msg) {
 			case 'isGlobalActive':
-				log('  [response]:', state.isCensoringActive);
-				sendResponse({ isActive: state.isCensoringActive });
-				break;
+				getState().then(function (state) {
+					log('  [response]:', state.isCensoringActive);
+					sendResponse({ isActive: state.isCensoringActive });
+				});
+				return true; // Needed to keep `sendResponse` alive async
 			case 'totalRedacted':
 				setTotalCount(sender.tab.id, sender.frameId, request.count);
 				break;
@@ -223,31 +214,34 @@ browser.tabs.onActivated.addListener(function (activeInfo) {
 });
 browser.tabs.onUpdated.addListener(tabLoadingHandler);
 
-log('--- event page loaded ---');
+log('--- service worker loaded ---');
 restoreState();
 
 
 ///// USER ACTIONS /////
 
 function toggleStatus() {
-	state.isCensoringActive = !state.isCensoringActive;
-	log('toggleStatus, active =', state.isCensoringActive);
-	browser.tabs.query({ active: true }).then(function (tabs) {
-		tabs.forEach(function (tab) {
-			ensureTabStatus(tab.id);
+	log('toggleStatus, wait for state');
+	getState().then(function () {
+		state.isCensoringActive = !state.isCensoringActive;
+		log('toggleStatus, active =', state.isCensoringActive);
+		browser.tabs.query({ active: true }).then(function (tabs) {
+			tabs.forEach(function (tab) {
+				ensureTabStatus(tab.id);
+			});
 		});
+		browser.action.setTitle({
+			title: actionTitle[state.isCensoringActive ? 'active' : 'inactive']
+		});
+		if (state.isCensoringActive) {
+			log('===ADD===')
+			browser.tabs.onUpdated.addListener(tabLoadingHandler);
+		} else {
+			log('===REMOVE===')
+			browser.tabs.onUpdated.removeListener(tabLoadingHandler);
+		}
+		saveState();
 	});
-	browser.browserAction.setTitle({
-		title: actionTitle[state.isCensoringActive ? 'active' : 'inactive']
-	});
-	if (state.isCensoringActive) {
-		log('===ADD===')
-		browser.tabs.onUpdated.addListener(tabLoadingHandler);
-	} else {
-		log('===REMOVE===')
-		browser.tabs.onUpdated.removeListener(tabLoadingHandler);
-	}
-	saveState();
 }
 
-browser.browserAction.onClicked.addListener(toggleStatus);
+browser.action.onClicked.addListener(toggleStatus);
