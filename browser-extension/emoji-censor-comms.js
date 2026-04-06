@@ -18,16 +18,16 @@ var DEBUG = false;
 var specialCases = [
 	['*', 'img[src^="https://twemoji.maxcdn.com/"]'], // Twemoji library
 	['*', 'img[src^="https://s.w.org/images/core/emoji/"]'], // Any Wordpress site
-	['twitter.com', '.Emoji'],
-	['mobile.twitter.com', 'img[src*="twimg.com/emoji/"]'],
+	['x.com', 'img[src*="twimg.com/emoji"]'],
 	['www.facebook.com', 'img[src*="images/emoji.php"]'],
+	['*.atlassian.net', 'img.emoji'],
 ];
 
 // Extra rules for about:blank pages.
 // If a query selector matches on the page, the page is associated with a specific domain.
 // Mainly useful for embedded Twitter widgets.
 var aboutBlankCases = [
-	['.timeline-Widget[data-iframe-title]', 'twitter.com'],
+	['.timeline-Widget[data-iframe-title]', 'x.com'],
 ];
 
 var isCensoringActive = false;
@@ -67,6 +67,7 @@ function getCustomSelectors(customHost) {
 			return (
 				rule[0] === '*' ||
 				rule[0] === location.hostname ||
+				(rule[0].startsWith('*') && location.hostname.endsWith(rule[0].slice(1))) ||
 				(customHost && rule[0] === customHost)
 			);
 		}).map(function (rule) {
@@ -156,14 +157,14 @@ function setIsActive(isNowActive) {
 		document.querySelectorAll('twitter-widget').forEach(widget => {
 			let root = widget.shadowRoot;
 			let twitterObserver;
-			redact(root, root, 'twitter.com');
+			redact(root, root, 'x.com');
 			if (trackedCustomElements.has(widget)) {
 				twitterObserver = trackedCustomElements.get(widget);
 			} else {
 				let cssClone = document.getElementById('emoji-censor-default-styles').cloneNode(true);
 				let style = root.querySelector('style');
 				style.parentNode.insertBefore(cssClone, style);
-				twitterObserver = new MutationObserver(observerCallback(root, 'twitter.com'));
+				twitterObserver = new MutationObserver(observerCallback(root, 'x.com'));
 				trackedCustomElements.set(widget, twitterObserver);
 			}
 			twitterObserver.observe(root, observerConfig);
