@@ -130,6 +130,6 @@ Returns a boolean indicating if speaking censored text is supported in the user�
 
 This code is open source under the [MIT license](LICENSE) – © Gilmore Davidson.
 
-Emoji detection is provided by the [emoji-regex](https://github.com/mathiasbynens/emoji-regex) library, thanks to the tireless efforts of Mathias Bynens to improve the state of Unicode handling in JavaScript.
+Emoji detection is provided by the [emoji-regex-xs](https://github.com/slevithan/emoji-regex-xs) library.
 
 And, of course, thanks to Ben for sparking the idea in the first place. Stop providing me with distractions, dammit! 😉
